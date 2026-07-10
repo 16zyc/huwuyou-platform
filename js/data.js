@@ -1,3 +1,22 @@
+// ========== 全局订单池（4端共享，驱动跨端流转）==========
+// 订单状态：待接单 → 已接单 → 服务中 → 已完成 / 已取消
+const OrderPool = {
+  list: [],
+  nextId: 1,
+  add(order) {
+    const id = 'ORD' + String(Date.now()).slice(-6) + this.nextId++;
+    const newOrder = Object.assign({ id, status: '待接单', createTime: new Date().toLocaleString('zh-CN', {hour:'2-digit',minute:'2-digit',month:'2-digit',day:'2-digit'}) }, order);
+    this.list.unshift(newOrder);
+    return newOrder;
+  },
+  getById(id) { return this.list.find(o => o.id === id); },
+  update(id, patch) {
+    const o = this.getById(id);
+    if (o) Object.assign(o, patch);
+    return o;
+  },
+};
+
 // ========== 模拟数据 ==========
 const MockData = {
   // 患者端

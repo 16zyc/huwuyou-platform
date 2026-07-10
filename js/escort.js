@@ -25,18 +25,23 @@ const Escort = {
       <!-- 订单池 -->
       <div class="section-title">
         <h3>🎯 AI 智能推荐订单</h3>
-        <span class="tag tag-blue">按契合度排序</span>
+        <span class="tag tag-blue">${this.orderList().length} 单待接</span>
       </div>
-      ${d.orderPool.map(o => `
+      ${this.orderList().length === 0 ? `
+        <div class="empty">
+          <div class="em-icon">📭</div>
+          <div>暂无待接订单</div>
+          <div style="font-size:11px; margin-top:6px;">患者下单后将自动推送到这里</div>
+        </div>
+      ` : this.orderList().map(o => `
         <div class="order-pool-item">
           <div class="op-head">
-            <span class="op-patient">${o.patient} · ${o.gender}/${o.age}岁</span>
+            <span class="op-patient">${o.patient} · ${o.age}</span>
             <span class="op-match">${o.match}% 契合</span>
           </div>
           <div class="op-info">
             <span>🏥 ${o.hospital} · ${o.dept}</span>
-            <span>🕐 ${o.time}</span>
-            <span>📍 ${o.distance}</span>
+            <span>🕐 ${o.appointmentTime}</span>
           </div>
           <div class="op-tags">
             <span class="tag tag-orange">${o.type}</span>
@@ -44,12 +49,34 @@ const Escort = {
           </div>
           <div style="font-size:11px; color:var(--secondary); margin-top:4px;">💡 AI：该订单与您过往经验匹配度 ${o.match}%</div>
           <div class="op-actions">
-            <button class="btn btn-outline btn-sm" onclick="Escort.toast('已忽略订单 ${o.id}')">忽略</button>
-            <button class="btn btn-sm" onclick="Escort.acceptOrder('${o.id}', '${o.patient}')">立即接单</button>
+            <button class="btn btn-outline btn-sm" onclick="Escort.ignoreOrder('${o.id}')">忽略</button>
+            <button class="btn btn-sm" onclick="Escort.acceptOrder('${o.id}')">立即接单</button>
           </div>
         </div>
       `).join('')}
     `;
+  },
+
+  // 合并 待接单的实时订单 + 预置订单池
+  orderList() {
+    // 待接单的实时订单（来自患者端下单）
+    const live = OrderPool.list.filter(o => o.status === '待接单').map(o => ({
+      id: o.id, patient: o.patient, age: o.age + '岁',
+      hospital: o.hospital, dept: o.dept,
+      appointmentTime: o.appointmentTime, type: o.type, tags: o.tags,
+      match: o.matchBase,
+      _live: true,
+    }));
+    // 预置订单池（去掉已接的，仅展示未接的）
+    const preset = MockData.escort.orderPool.map(o => ({
+      id: o.id, patient: o.patient + ' · ' + o.gender + '/' + o.age + '岁', age: o.gender + '/' + o.age + '岁',
+      hospital: o.hospital, dept: o.dept,
+      appointmentTime: o.time, type: o.type, tags: o.tags,
+      match: o.match, distance: o.distance,
+      _live: false,
+    }));
+    // 实时订单优先显示在前面
+    return [...live, ...preset];
   },
 
   // 陪诊中辅助
@@ -279,8 +306,57 @@ const Escort = {
     `;
   },
 
-  acceptOrder(id, patient) {
-    this.toast(`✅ 已接单 #${id}\n患者：${patient}\n订单已锁定，请按时到达`);
+  acceptOrder(id) {
+    // 实时订单：更新全局订单池状态
+    const o = OrderPool.getById(id);
+    if (o) {
+      OrderPool.update(id, { status: '已接单', escort: '李敏' });
+      this.toast(`✅ 已接单 #${id}\n患者：${o.patient}\n订单已锁定，请按时到达\n（患者端已同步通知）`);
+    } else {
+      // 预置订单：从预置池移除并加入全局池
+      const preset = MockData.escort.orderPool.find(p => p.id === id);
+      if (preset) {
+        const newOrder = OrderPool.add({
+          type: preset.type, hospital: preset.hospital, dept: preset.dept,
+          appointmentTime: preset.time, patient: preset.patient,
+          age: preset.age + '岁', pkg: '全程套餐', price: '598',
+          tags: preset.tags, escort: '李敏',
+        });
+        OrderPool.update(newOrder.id, { status: '已接单' });
+        MockData.escort.orderPool = MockData.escort.orderPool.filter(p => p.id !== id);
+        this.toast(`✅ 已接单 #${newOrder.id}\n患者：${preset.patient}\n订单已锁定`);
+      }
+    }
+    // 刷新工作台
+    setTimeout(() => { App.renderScreen(); }, 1500);
+  },
+
+  ignoreOrder(id) {
+    // 预置订单忽略后从池中移除（避免反复出现）
+    const idx = MockData.escort.orderPool.findIndex(p => p.id === id);
+    if (idx >= 0) {
+      MockData.escort.orderPool.splice(idx, 1);
+      this.toast('已忽略该订单');
+      setTimeout(() => { App.renderScreen(); }, 800);
+    } else {
+      this.toast('已忽略该订单');
+    }
+  },
+
+  // 完成签到 → 进入服务中
+  startService(id) {
+    OrderPool.update(id, { status: '服务中' });
+    this.toast('📍 已签到，服务开始\n患者端已同步进入"陪诊中"直播态');
+    setTimeout(() => { App.currentTab = 1; App.renderTabbar(); App.renderScreen(); }, 1500);
+  },
+
+  // 完成服务签退
+  finishService(id) {
+    if (confirm('确认签退？需患者手机验证码确认结束。')) {
+      OrderPool.update(id, { status: '已完成' });
+      this.toast('🎉 服务完成，已签退\n订单已完成，等待患者评价');
+      setTimeout(() => { App.currentTab = 0; App.renderTabbar(); App.renderScreen(); }, 1500);
+    }
   },
 
   toast(msg) {

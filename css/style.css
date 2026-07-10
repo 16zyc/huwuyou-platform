@@ -782,3 +782,67 @@ ul, li { list-style:none; }
 }
 .list-head h3 { font-size: 15px; font-weight: 700; }
 .list-head .more { font-size: 12px; color: var(--text-3); }
+
+/* ========== 下单表单页 ========== */
+.order-page { padding-bottom: 80px; }
+.order-header {
+  display:flex; align-items:center; gap:10px; margin-bottom: 14px;
+}
+.order-header .oh-back {
+  width:32px; height:32px; border-radius:8px;
+  background:#fff; box-shadow: var(--shadow);
+  display:flex; align-items:center; justify-content:center;
+  font-size: 18px; color: var(--text-2);
+}
+.order-header h2 { font-size: 17px; }
+.form-group { margin-bottom: 16px; }
+.form-group .fg-label {
+  font-size: 13px; font-weight: 600; color: var(--text-2);
+  margin-bottom: 8px; display:flex; align-items:center; gap:4px;
+}
+.form-group .fg-label .required { color: var(--danger); }
+.fg-input {
+  width: 100%; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 10px;
+  font-size: 14px; background: #fff; outline: none;
+  transition: border-color .15s;
+}
+.fg-input:focus { border-color: var(--primary); }
+textarea.fg-input { resize: none; height: 70px; }
+.fg-select {
+  width: 100%; padding: 12px 14px;
+  border: 1px solid var(--line); border-radius: 10px;
+  font-size: 14px; background: #fff; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+.fg-options { display:grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+.fg-option {
+  padding: 12px; border: 2px solid var(--line); border-radius: 10px;
+  background: #fff; text-align: center;
+}
+.fg-option .fo-name { font-size: 13px; font-weight: 600; }
+.fg-option .fo-price { font-size: 15px; font-weight: 800; color: var(--primary-dark); margin: 4px 0; }
+.fg-option .fo-sub { font-size: 11px; color: var(--text-3); }
+.fg-option.sel { border-color: var(--primary); background: var(--warm-bg); }
+.order-summary {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: #fff; padding: 12px 14px calc(var(--tabbar-h) + 12px);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+  display: flex; align-items: center; gap: 12px;
+}
+.order-summary .os-price { flex: 1; }
+.order-summary .os-price .os-num { font-size: 22px; font-weight: 800; color: var(--primary-dark); }
+.order-summary .os-price .os-label { font-size: 11px; color: var(--text-3); }
+.order-summary .btn { width: auto; padding: 12px 28px; }
+
+/* 订单状态徽标 */
+.status-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
+}
+.status-badge.pending { background: #FFF3E0; color: #E65100; }
+.status-badge.accepted { background: #E3F2FD; color: #1565C0; }
+.status-badge.serving { background: #E8F5E9; color: #2E7D32; }
+.status-badge.done { background: #F5F5F5; color: #666; }
+.status-badge.cancelled { background: #FFEBEE; color: #C62828; }
