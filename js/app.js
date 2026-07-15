@@ -361,16 +361,17 @@ const App = {
       }
       const data = await resp.json();
       const content = data.choices?.[0]?.message?.content?.trim() || '';
-      // 尝试解析 JSON
-      if (content.startsWith('{') && content.includes('"action":"create_need"')) {
+      // 尝试从返回内容中提取 JSON（兼容 markdown 代码块包裹）
+      const jsonStr = this.extractJSON(content);
+      if (jsonStr) {
         try {
-          const parsed = JSON.parse(content);
-          return this.createNeedFromAI(parsed, q);
-        } catch (e) {
-          // JSON 解析失败，原样返回
-          return content;
-        }
+          const parsed = JSON.parse(jsonStr);
+          if (parsed.action === 'create_need') {
+            return this.createNeedFromAI(parsed, q);
+          }
+        } catch (e) { /* JSON 解析失败，走下面的逻辑 */ }
       }
+      // 非 JSON 或解析失败，原样返回 AI 对话内容
       return content || '我没能理解，请告诉我您想去哪家医院、哪个科室、哪天去？';
     } catch (e) {
       console.error('AI request failed:', e);
@@ -399,23 +400,127 @@ const App = {
     return '已帮您整理好需求并提交：\n\n• 患者：' + u.name + '（' + u.gender + '，' + u.age + '岁）\n• 医院：' + parsed.hospital + ' · ' + parsed.dept + '\n• 时间：' + parsed.date + '\n• 服务：' + parsed.serviceType + '（¥' + amount + '）\n• 编号：' + req.id + '\n\n需求已同步给后台，工作人员将为您匹配陪诊师并对接医院。\n可在「陪诊进度」里查看最新状态。';
   },
 
-  // AI 不可用时的降级：本地规则匹配
+  // 从 AI 返回内容中提取 JSON（兼容 markdown 代码块包裹）
+  extractJSON(text) {
+    // 1. 尝试从 ```json ... ``` 代码块中提取
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      const s = codeBlockMatch[1].trim();
+      if (s.startsWith('{')) return s;
+    }
+    // 2. 尝试直接匹配 { ... }（贪婪到最后一个 }）
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start !== -1 && end > start) {
+      return text.substring(start, end + 1);
+    }
+    return null;
+  },
+
+  // AI 不可用时的降级：本地口语化智能解析
   aiReplyFallback(q) {
-    if (q.includes('协和') && q.includes('心内科')) {
-      const u = MockData.patient.user; const med = MockData.patient.medical;
-      const req = NeedPool.add({
-        patientName: u.name, gender: u.gender, age: u.age, phone: u.phone,
-        emergencyName: u.emergencyName, emergencyPhone: u.emergencyPhone,
-        history: med.history, allergy: med.allergy, medicine: med.medicine, mobility: med.mobility, insurance: med.insurance,
-        hospital: '北京协和医院', dept: '心内科', date: '下周二', serviceType: '全程陪诊', amount: 598,
-        note: 'AI对话解析生成：' + q, status: '待处理',
-      });
-      return '已帮您整理好需求并提交：\n\n• 患者：' + u.name + '（' + u.gender + '，' + u.age + '岁）\n• 医院：北京协和医院 · 心内科\n• 时间：下周二\n• 服务：全程陪诊（¥598）\n• 编号：' + req.id + '\n\n需求已同步给后台，工作人员将为您匹配陪诊师并对接医院。';
+    const parsed = this.parseSpokenNeed(q);
+    if (parsed) {
+      return this.createNeedFromAI(parsed, q);
     }
-    if (q.includes('爸') || q.includes('陪诊')) {
-      return '好的，我来帮您找陪诊师。请告诉我：\n\n1. 患者是我本人还是家属？\n2. 想去哪个医院、哪个科室？\n3. 期望哪天去？\n\n您也可以直接说"我想约下周二去协和看心内科"，我一次帮您整理好。';
+    // 无法提取到关键信息，追问
+    const missing = [];
+    if (!parsed || !parsed.hospital) missing.push('想去哪家医院');
+    if (!parsed || !parsed.dept) missing.push('什么科室');
+    if (!parsed || !parsed.date) missing.push('哪天去');
+    if (missing.length === 3) {
+      return '您好，我是智能陪诊助手。请告诉我：\n\n• 想去哪家医院？\n• 什么科室？\n• 哪天去？\n\n您可以直接说，比如"下周二带我妈去协和看心内科，要全程陪"';
     }
-    return '我在听。您可以直接告诉我：\n\n• "我想约下周二去协和看心内科"\n• "帮我爸找陪诊"\n• "今天陪诊师什么时候到？"\n\n我会帮您整理需求并同步给后台，不用填一堆表单。';
+    return '好的，我还差几个信息：请告诉我' + missing.join('、') + '？';
+  },
+
+  // 口语化需求解析：从自然语言中提取医院/科室/日期/服务类型/特殊需求
+  parseSpokenNeed(q) {
+    let hospital = null, dept = null, date = null, serviceType = null, note = null;
+
+    // === 医院匹配（支持简称和口语）===
+    const hospitalMap = {
+      '协和': '北京协和医院',
+      '同仁': '北京同仁医院',
+      '北大第一': '北京大学第一医院',
+      '北大一院': '北京大学第一医院',
+      '解放军总医院': '中国人民解放军总医院',
+      '301': '中国人民解放军总医院',
+      '三零一': '中国人民解放军总医院',
+    };
+    for (const key in hospitalMap) {
+      if (q.includes(key)) { hospital = hospitalMap[key]; break; }
+    }
+
+    // === 科室匹配（支持口语化描述）===
+    const deptMap = {
+      '心内': '心内科', '心脏': '心内科', '心病': '心内科', '心血管': '心内科',
+      '神内': '神经内科', '神经': '神经内科', '脑梗': '神经内科', '脑': '神经内科',
+      '骨': '骨科', '关节': '骨科', '腰': '骨科', '腿': '骨科', '颈椎': '骨科',
+      '眼': '眼科', '视网膜': '眼科', '白内障': '眼科', '青光眼': '眼科',
+      '内分泌': '内分泌科', '糖尿病': '内分泌科', '甲状腺': '内分泌科',
+      '消化': '其他', '呼吸': '其他', '皮肤': '其他', '泌尿': '其他',
+    };
+    for (const key in deptMap) {
+      if (q.includes(key)) { dept = deptMap[key]; break; }
+    }
+
+    // === 日期匹配（支持多种口语表达）===
+    const dayMap = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':7,'天':7};
+    // 下周X
+    let m = q.match(/下周[一二三四五六日天](?:|上午|下午)/);
+    if (m) { date = m[0]; }
+    // 后天/大后天
+    if (!date) {
+      if (q.includes('大后天')) date = '大后天';
+      else if (q.includes('后天')) date = '后天';
+      else if (q.includes('明天')) date = '明天';
+      else if (q.includes('今天')) date = '今天';
+    }
+    // X月X号/日
+    if (!date) {
+      m = q.match(/(\d{1,2})月(\d{1,2})[号日]/);
+      if (m) { date = m[1] + '月' + m[2] + '日'; }
+    }
+    // 周X
+    if (!date) {
+      m = q.match(/周[一二三四五六日天]/);
+      if (m) { date = m[0]; }
+    }
+
+    // === 服务类型匹配 ===
+    if (q.includes('全程') || q.includes('从头到尾') || q.includes('挂号') && q.includes('取药')) {
+      serviceType = '全程陪诊';
+    } else if (q.includes('半程') || q.includes('半天')) {
+      serviceType = '半程陪诊';
+    } else if (q.includes('跑腿') || q.includes('代取') || q.includes('代开药') || q.includes('代买')) {
+      serviceType = '代办跑腿';
+    } else if (q.includes('复诊') || q.includes('复查')) {
+      serviceType = '陪同复诊';
+    }
+
+    // === 特殊需求提取 ===
+    const needs = [];
+    if (q.includes('轮椅')) needs.push('需要轮椅');
+    if (q.includes('耳背') || q.includes('听不清') || q.includes('大声')) needs.push('老人耳背，需大声说话');
+    if (q.includes('方言') || q.includes('不会普通话')) needs.push('需要会方言的陪诊师');
+    if (q.includes('搀扶') || q.includes('扶')) needs.push('需要搀扶');
+    if (q.includes('推床') || q.includes('推轮椅')) needs.push('需推轮椅');
+    note = needs.length ? needs.join('；') : null;
+
+    // === 判断是否是"想预约陪诊"的意图 ===
+    const intentWords = ['陪','约','去','看','陪诊','医院','挂号','看病','就诊','检查','复查','复诊'];
+    const hasIntent = intentWords.some(w => q.includes(w));
+    if (!hasIntent) return null;
+
+    // 至少要有医院或科室才算能解析
+    if (!hospital && !dept) return null;
+
+    // 给默认值
+    if (!serviceType) serviceType = '半程陪诊'; // 默认半程
+    if (!date) date = '待确认';
+
+    return { action: 'create_need', hospital: hospital || '待确认', dept: dept || '待确认', date, serviceType, note, amount: null };
   },
 
   toast(msg) {
