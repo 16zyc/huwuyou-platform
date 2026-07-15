@@ -29,19 +29,19 @@ const App = {
             <div class="lb-name">护无忧</div>
             <div class="lb-sub">智陪诊全链路平台 · HomMed AI</div>
           </div>
-          <div class="login-slogan">您不孤单，我们全程在</div>
+          <div class="login-slogan">专业陪诊服务 · 安全放心</div>
           <div class="role-cards">
             <div class="role-card role-card-patient" onclick="App.goPatientLogin()">
-              <div class="rc-icon">👵</div>
+              <div class="rc-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
               <div class="rc-title">我是患者</div>
               <div class="rc-desc">登录后提交陪诊需求、查看进度、紧急联系</div>
-              <div class="rc-arrow">›</div>
+              <div class="rc-arrow"><svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
             </div>
             <div class="role-card role-card-admin" onclick="App.goAdminLogin()">
-              <div class="rc-icon">🖥️</div>
+              <div class="rc-icon"><svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></div>
               <div class="rc-title">我是管理员</div>
               <div class="rc-desc">登录后台管理需求、陪诊师、医院与数据</div>
-              <div class="rc-arrow">›</div>
+              <div class="rc-arrow"><svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
             </div>
           </div>
           <div class="login-foot">© 2026 护无忧 · 智陪诊全链路平台</div>
@@ -63,11 +63,11 @@ const App = {
           </div>
           <div class="login-form">
             <div class="form-group">
-              <div class="fg-label">📱 手机号</div>
+              <div class="fg-label">手机号</div>
               <input type="tel" class="fg-input" id="p_phone" placeholder="请输入手机号" value="138 8866 8866" />
             </div>
             <div class="form-group">
-              <div class="fg-label">🔐 验证码</div>
+              <div class="fg-label">验证码</div>
               <div class="code-row">
                 <input type="text" class="fg-input" id="p_code" placeholder="请输入验证码" value="8888" />
                 <button class="code-btn" id="p_sendCode" onclick="App.sendCode('p')">获取验证码</button>
@@ -77,7 +77,7 @@ const App = {
             <button class="btn btn-outline" style="margin-top:10px;" onclick="App.patientQuickLogin()">一键演示登录</button>
             <div class="login-tip">
               <div class="ai-icon-sm">AI</div>
-              <div>登录后可使用 AI 陪伴助理：说话就能提交需求</div>
+              <div>登录后可使用智能陪诊助理：说话就能提交需求</div>
             </div>
           </div>
         </div>
@@ -92,21 +92,21 @@ const App = {
         <div class="login-back" onclick="App.back()">‹ 返回</div>
         <div class="login-wrap">
           <div class="login-brand">
-            <div class="lb-logo lb-logo-admin">⚙</div>
+            <div class="lb-logo lb-logo-admin">管</div>
             <div class="lb-name">管理员登录</div>
             <div class="lb-sub">护无忧运营后台</div>
           </div>
           <div class="login-form">
             <div class="form-group">
-              <div class="fg-label">👤 账号</div>
+              <div class="fg-label">账号</div>
               <input type="text" class="fg-input" id="a_account" placeholder="请输入账号" value="admin@huwuyou" />
             </div>
             <div class="form-group">
-              <div class="fg-label">🔑 密码</div>
+              <div class="fg-label">密码</div>
               <input type="password" class="fg-input" id="a_pwd" placeholder="请输入密码" value="huwuyou2026" />
             </div>
             <div class="form-group">
-              <div class="fg-label">🛡️ 验证码</div>
+              <div class="fg-label">验证码</div>
               <div class="code-row">
                 <input type="text" class="fg-input" id="a_code" placeholder="请输入验证码" value="8888" />
                 <button class="code-btn" onclick="App.toast('已发送验证码到管理员手机')">获取验证码</button>
@@ -115,7 +115,7 @@ const App = {
             <button class="btn btn-login btn-login-admin" onclick="App.adminLogin()">登 录</button>
             <button class="btn btn-outline" style="margin-top:10px;" onclick="App.adminQuickLogin()">一键演示登录</button>
             <div class="login-tip">
-              <div class="ai-icon-sm">🔒</div>
+              <div class="ai-icon-sm">AI</div>
               <div>本系统采用银行级加密 · 所有操作均记入审计日志</div>
             </div>
           </div>
@@ -188,8 +188,8 @@ const App = {
           </header>
           <main id="screen" class="screen"></main>
           <nav class="tabbar" id="tabbar"></nav>
-          <div class="ai-float" id="aiFloat">
-            <div class="ai-float-ball">AI</div>
+          <div class="ai-float" id="aiFloat" title="智能陪诊助手">
+            <div class="ai-float-ball"><svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg></div>
           </div>
           <div class="ai-panel" id="aiPanel" hidden>
             <div class="ai-panel-head">
@@ -237,12 +237,7 @@ const App = {
   },
 
   renderPatientTabbar() {
-    const tabs = [
-      { name: '首页', icon: '🏠' },
-      { name: '我的需求', icon: '📋' },
-      { name: '陪诊进度', icon: '📍' },
-      { name: '我的', icon: '👤' },
-    ];
+    const tabs = Patient.tabs;
     const tabbar = document.getElementById('tabbar');
     tabbar.innerHTML = tabs.map((t, i) => `
       <button class="${i === this.patientTab ? 'active' : ''}" data-tab="${i}">
@@ -303,7 +298,7 @@ const App = {
         hospital: '北京协和医院', dept: '心内科', date: '下周二', serviceType: '全程陪诊', amount: 598,
         note: 'AI对话解析生成：' + q, status: '待处理',
       });
-      return '✅ 我已帮您整理好需求：\n\n• 患者：' + u.name + '（' + u.gender + '，' + u.age + '岁）\n• 病史：' + med.history + '\n• 医院：北京协和医院 · 心内科\n• 时间：下周二\n• 服务：全程陪诊\n\n需求已同步给后台，工作人员将为您匹配陪诊师并对接医院。\n您可以在「陪诊进度」里查看最新状态。';
+      return '我已帮您整理好需求：\n\n• 患者：' + u.name + '（' + u.gender + '，' + u.age + '岁）\n• 病史：' + med.history + '\n• 医院：北京协和医院 · 心内科\n• 时间：下周二\n• 服务：全程陪诊\n\n需求已同步给后台，工作人员将为您匹配陪诊师并对接医院。\n您可以在「陪诊进度」里查看最新状态。';
     }
     if (q.includes('爸') || q.includes('陪诊')) {
       return '好的，我来帮您找陪诊师。请告诉我：\n\n1. 患者是我本人还是家属？\n2. 想去哪个医院、哪个科室？\n3. 期望哪天去？\n\n您也可以直接说"我想约下周二去协和看心内科"，我一次帮您整理好。';
