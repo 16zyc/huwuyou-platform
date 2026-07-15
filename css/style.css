@@ -846,3 +846,229 @@ textarea.fg-input { resize: none; height: 70px; }
 .status-badge.serving { background: #E8F5E9; color: #2E7D32; }
 .status-badge.done { background: #F5F5F5; color: #666; }
 .status-badge.cancelled { background: #FFEBEE; color: #C62828; }
+
+/* ========== 患者端新增组件 ========== */
+/* AI 陪伴入口大卡 */
+.ai-entry {
+  display:flex; align-items:center; gap:14px;
+  background: linear-gradient(135deg, #FF8A3D 0%, #FF6B35 100%);
+  border-radius: 16px; padding: 16px; margin-bottom: 14px;
+  color:#fff; box-shadow: 0 6px 18px rgba(255,107,53,0.3);
+  cursor:pointer; transition: transform .15s;
+}
+.ai-entry:active { transform: scale(0.98); }
+.ai-entry-icon .ai-orb {
+  width:48px; height:48px; border-radius:50%;
+  background: rgba(255,255,255,0.25);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:18px;
+  border: 2px solid rgba(255,255,255,0.5);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+}
+.ai-entry-text { flex:1; }
+.ai-entry-title { font-size:15px; font-weight:700; }
+.ai-entry-sub { font-size:11px; opacity:0.9; margin-top:2px; }
+.ai-entry-arrow { font-size:22px; opacity:0.8; }
+
+/* 今日状态卡 */
+.today-card {
+  background:#fff; border-radius:16px; padding:14px;
+  margin-bottom:14px; box-shadow: var(--shadow);
+}
+.today-card.today-empty { text-align:center; padding:24px 14px; }
+.tc-head { display:flex; justify-content:space-between; align-items:center; }
+.tc-badge { font-size:11px; font-weight:600; padding:3px 8px; border-radius:6px; }
+.tc-badge.serving { background:#E8F5E9; color:#2E7D32; }
+.tc-badge.accepted { background:#E3F2FD; color:#1565C0; }
+.tc-time { font-size:11px; color:var(--text-3); }
+.tc-title { font-size:14px; font-weight:700; margin:8px 0 10px; }
+.tc-escort {
+  display:flex; align-items:center; gap:10px;
+  padding:10px; background:var(--warm-bg); border-radius:10px;
+}
+.tc-avatar {
+  width:36px; height:36px; border-radius:50%;
+  background:var(--primary); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:14px;
+}
+.tc-call {
+  margin-left:auto; text-decoration:none;
+  background:#fff; color:var(--primary-dark);
+  padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600;
+}
+
+/* SOS 紧急按钮 */
+.sos-row { display:flex; gap:10px; margin-bottom:14px; }
+.sos-btn {
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:14px; border:none; border-radius:14px; cursor:pointer;
+  background: linear-gradient(135deg,#FF5252,#E53935); color:#fff;
+  box-shadow: 0 4px 12px rgba(229,57,53,0.3);
+}
+.sos-btn.sos-2 { background: linear-gradient(135deg,#42A5F5,#1E88E5); box-shadow: 0 4px 12px rgba(30,136,229,0.3); }
+.sos-icon { font-size:20px; }
+.sos-btn span:last-child { font-size:12px; font-weight:600; }
+
+/* 页面标题 */
+.page-head { margin-bottom:14px; }
+.page-head h2 { font-size:18px; font-weight:800; }
+.page-head > div { margin-top:4px; }
+
+/* 卡片标题 */
+.card-title {
+  font-size:14px; font-weight:700; margin-bottom:10px;
+  display:flex; align-items:center; gap:4px;
+}
+
+/* step 进度条 */
+.step-bar { display:flex; gap:6px; }
+.step-bar .step {
+  flex:1; height:5px; border-radius:3px; background:#EFEFEF;
+  transition: background .2s;
+}
+.step-bar .step.done { background: var(--primary); }
+.step-bar .step.active { background: var(--primary-dark); animation: blink 1.2s infinite; }
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+/* ========== 后台新增组件 ========== */
+/* KPI 卡片网格 */
+.kpi-grid {
+  display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;
+  margin-bottom:14px;
+}
+.kpi-card {
+  background:#fff; border-radius:12px; padding:14px 10px; text-align:center;
+  box-shadow: var(--shadow);
+}
+.kpi-num { font-size:22px; font-weight:800; color:var(--text-1); }
+.kpi-card.kpi-warn .kpi-num { color:#E65100; }
+.kpi-card.kpi-blue .kpi-num { color:#1565C0; }
+.kpi-card.kpi-green .kpi-num { color:#2E7D32; }
+.kpi-card.kpi-red .kpi-num { color:#C62828; }
+.kpi-label { font-size:11px; color:var(--text-3); margin-top:4px; }
+
+/* 需求行 */
+.need-row {
+  display:flex; align-items:flex-start; gap:10px;
+  background:#fff; border-radius:12px; padding:12px;
+  margin-bottom:10px; box-shadow: var(--shadow);
+  cursor:pointer; transition: transform .1s;
+}
+.need-row:active { transform: scale(0.99); }
+.nr-main { flex:1; min-width:0; }
+.nr-patient { font-size:14px; font-weight:600; }
+.nr-info { font-size:12px; color:var(--text-2); margin-top:4px; }
+.nr-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+
+/* 筛选条 */
+.filter-bar {
+  display:flex; gap:6px; overflow-x:auto; padding-bottom:10px;
+  margin-bottom:10px; -webkit-overflow-scrolling: touch;
+}
+.filter-bar::-webkit-scrollbar { display:none; }
+.filter-btn {
+  white-space:nowrap; padding:6px 12px; border:1px solid var(--line);
+  background:#fff; border-radius:16px; font-size:12px; cursor:pointer; color:var(--text-2);
+}
+.filter-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+/* 陪诊师分配卡 */
+.escort-pick {
+  display:flex; align-items:center; gap:10px;
+  padding:10px; border:1px solid var(--line); border-radius:10px;
+  margin-bottom:8px; background:#fff;
+}
+.escort-pick.pick-rec { border-color:var(--primary); background:var(--warm-bg); }
+.ep-avatar {
+  width:40px; height:40px; border-radius:50%;
+  background:var(--primary); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-weight:700;
+}
+.ep-info { flex:1; min-width:0; }
+.ep-name { font-size:13px; font-weight:600; }
+.ep-tags { display:flex; flex-wrap:wrap; gap:3px; margin-top:3px; }
+.ep-match { font-size:13px; font-weight:800; color:var(--primary-dark); }
+
+/* 医院选择 */
+.hospital-pick {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px; border:1px solid var(--line); border-radius:10px;
+  margin-bottom:8px; background:#fff;
+}
+
+/* 陪诊师头像（列表） */
+.escort-avatar {
+  width:44px; height:44px; border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:16px;
+}
+
+/* tag-red */
+.tag.tag-red { background:#FFEBEE; color:#C62828; }
+.tag.tag-success { background:#E8F5E9; color:#2E7D32; }
+
+/* 个人资料卡 */
+.profile-head {
+  text-align:center; padding: 20px 0 16px;
+}
+.ph-avatar {
+  width:72px; height:72px; border-radius:50%; margin:0 auto 10px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:30px; font-weight:700;
+}
+.ph-name { font-size:18px; font-weight:700; }
+.ph-sub { font-size:12px; color:var(--text-3); margin-top:4px; }
+
+/* 配置行 */
+.config-row {
+  display:flex; align-items:center; gap:8px;
+  padding:12px 0; border-bottom:1px solid var(--line);
+}
+.config-row:last-child { border-bottom:none; }
+.config-row .cr-label { flex:1; font-size:14px; }
+.config-row .cr-val { font-size:12px; color:var(--text-3); }
+
+/* ai-tip 提示卡 */
+.ai-tip {
+  display:flex; gap:10px; align-items:flex-start;
+  background: var(--warm-bg); border-radius:10px; padding:10px;
+  margin: 10px 0;
+}
+.ai-tip .ai-icon {
+  width:28px; height:28px; border-radius:8px; flex-shrink:0;
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800;
+}
+.ai-tip .ai-content { flex:1; }
+.ai-tip .ai-title { font-size:12px; font-weight:700; }
+.ai-tip .ai-text { font-size:11px; color:var(--text-2); margin-top:3px; line-height:1.5; }
+
+/* ========== 后台模式（PC 拓宽布局）========== */
+body.admin-mode #app {
+  max-width: 100%;
+  min-height: 100vh;
+}
+body.admin-mode .role-bar {
+  position: sticky; top:0; z-index:100;
+}
+body.admin-mode .screen {
+  max-width: 1100px; margin: 0 auto;
+  padding-bottom: 0;
+}
+body.admin-mode .tabbar {
+  max-width: 1100px; margin: 0 auto;
+  position: sticky; bottom:0;
+}
+/* KPI 在宽屏下用 6 列 */
+@media (min-width: 768px) {
+  body.admin-mode .kpi-grid { grid-template-columns: repeat(6, 1fr); }
+  body.admin-mode .need-row { font-size: 14px; }
+}

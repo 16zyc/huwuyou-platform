@@ -11,7 +11,7 @@
 <!-- 手机外壳（PC端居中显示手机框，移动端全屏） -->
 <div id="phone-frame">
   <div id="app">
-    <!-- 顶部角色切换条 -->
+    <!-- 顶部双端切换条 -->
     <header class="role-bar">
       <div class="role-brand">
         <span class="brand-logo">护</span>
@@ -21,10 +21,8 @@
         </div>
       </div>
       <div class="role-switcher" id="roleSwitcher">
-        <button class="role-btn active" data-role="patient">患者</button>
-        <button class="role-btn" data-role="escort">陪诊师</button>
-        <button class="role-btn" data-role="agency">机构</button>
-        <button class="role-btn" data-role="admin">管理员</button>
+        <button class="role-btn active" data-role="patient">患者端</button>
+        <button class="role-btn" data-role="admin">管理后台</button>
       </div>
     </header>
 
@@ -41,19 +39,19 @@
     <!-- AI 助手面板 -->
     <div class="ai-panel" id="aiPanel" hidden>
       <div class="ai-panel-head">
-        <span>AI 就医助理</span>
+        <span>AI 陪伴助理</span>
         <button class="ai-close" id="aiClose">×</button>
       </div>
       <div class="ai-panel-body">
-        <div class="ai-msg ai-bot">您好，我是护无忧 AI 就医助理，可以帮您规划就诊路线、解答就医疑问。试试说："我发烧了怎么办？"</div>
+        <div class="ai-msg ai-bot">您好，我是护无忧 AI 陪伴助理。我不会让您填一堆表单——您可以直接告诉我："我想约下周二去协和看心内科"，我会帮您整理好需求并同步给后台。</div>
       </div>
       <div class="ai-quick">
-        <button data-q="我发烧了怎么办？">我发烧了怎么办？</button>
-        <button data-q="帮我规划明天去协和的路线">规划去协和的路线</button>
-        <button data-q="明天天气怎么样？">明天天气？</button>
+        <button data-q="我想约下周二去协和看心内科">约下周二去协和看心内科</button>
+        <button data-q="我爸65岁高血压想找陪诊">帮我爸找陪诊</button>
+        <button data-q="今天陪诊师什么时候到？">今天陪诊师什么时候到？</button>
       </div>
       <div class="ai-input">
-        <input type="text" id="aiInput" placeholder="输入问题或点击上方快捷提问" />
+        <input type="text" id="aiInput" placeholder="说话或打字，我来帮您整理需求" />
         <button id="aiSend">发送</button>
       </div>
     </div>
@@ -63,8 +61,6 @@
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
 <script src="js/patient.js"></script>
-<script src="js/escort.js"></script>
-<script src="js/agency.js"></script>
 <script src="js/admin.js"></script>
 </body>
 </html>
