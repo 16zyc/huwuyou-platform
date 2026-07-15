@@ -273,7 +273,7 @@ const App = {
     document.getElementById('aiPanel').hidden = false;
   },
 
-  aiSend() {
+  async aiSend() {
     const input = document.getElementById('aiInput');
     const q = input.value.trim();
     if (!q) return;
@@ -281,32 +281,139 @@ const App = {
     body.innerHTML += `<div class="ai-msg ai-user">${this.escape(q)}</div>`;
     input.value = '';
     body.scrollTop = body.scrollHeight;
-    setTimeout(() => {
-      const reply = this.aiReply(q);
+    // 显示"正在思考..."
+    const loadingId = 'loading_' + Date.now();
+    body.innerHTML += `<div class="ai-msg ai-bot" id="${loadingId}">正在思考...</div>`;
+    body.scrollTop = body.scrollHeight;
+    try {
+      const reply = await this.aiReply(q);
+      document.getElementById(loadingId).remove();
       body.innerHTML += `<div class="ai-msg ai-bot">${this.escape(reply).replace(/\n/g,'<br>')}</div>`;
       body.scrollTop = body.scrollHeight;
-    }, 600);
+    } catch (e) {
+      document.getElementById(loadingId).remove();
+      body.innerHTML += `<div class="ai-msg ai-bot">抱歉，AI 暂时不可用，请稍后再试。错误：${this.escape(String(e).slice(0,80))}</div>`;
+      body.scrollTop = body.scrollHeight;
+    }
   },
 
-  aiReply(q) {
+  // 真实调用 DeepSeek API 理解患者需求
+  async aiReply(q) {
+    // 快捷指令：查今日安排
+    if (q.includes('今天') && (q.includes('安排') || q.includes('什么时候') || q.includes('到'))) {
+      const t = MockData.patient.todaySchedule;
+      if (t.hasService) return '您今天的安排：\n\n• ' + t.hospital + ' · ' + t.dept + '\n• 时间：' + t.time + '\n• 陪诊师：' + t.escort + '（' + t.escortPhone + '）\n• 当前状态：' + t.escortStatus;
+      return '今天没有陪诊安排。需要约一个吗？';
+    }
+
+    if (!AIConfig.apiKey || !AIConfig.enabled) {
+      return this.aiReplyFallback(q);
+    }
+
+    const u = MockData.patient.user;
+    const med = MockData.patient.medical;
+    const systemPrompt = `你是"护无忧"智陪诊平台的 AI 助手，帮患者用自然语言提交陪诊需求。
+
+当前患者信息：
+- 姓名：${u.name}
+- 性别：${u.gender}，年龄：${u.age}岁
+- 既往病史：${med.history}
+- 过敏史：${med.allergy}
+- 用药：${med.medicine}
+- 行动能力：${med.mobility}
+- 医保：${med.insurance}
+- 联系人：${u.emergencyName}（${u.emergencyPhone}）
+- 手机：${u.phone}
+
+可选医院：北京协和医院、北京同仁医院、北京大学第一医院、中国人民解放军总医院
+可选科室：心内科、神经内科、骨科、眼科、内分泌科、其他
+服务类型：半程陪诊（4小时 ¥298）、全程陪诊（挂号-取药 ¥598）、代办跑腿（代取药 ¥98）、陪同复诊（¥398）
+
+任务：
+1. 从用户的话里解析出：医院、科室、日期、服务类型、特殊需求
+2. 如果信息齐全，直接返回 JSON 格式（仅 JSON，无其他文字）：
+{"action":"create_need","hospital":"...","dept":"...","date":"...","serviceType":"...","note":"...","amount":298}
+3. 如果信息不齐全，用自然语言追问缺失的关键信息（医院/科室/日期）
+4. 日期用相对描述（如"下周二"、"后天"）即可
+5. 不要杜撰用户没说的事实
+6. 如果用户问的不是预约陪诊（比如闲聊），正常回答即可，不要强行解析成需求
+
+记住：只返回 JSON 或自然语言对话，不要两者混在一起。`;
+
+    try {
+      const resp = await fetch(AIConfig.baseUrl + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + AIConfig.apiKey },
+        body: JSON.stringify({
+          model: AIConfig.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: q },
+          ],
+          temperature: 0.3,
+          max_tokens: 500,
+        }),
+      });
+      if (!resp.ok) {
+        const errText = await resp.text();
+        console.error('DeepSeek API error:', resp.status, errText);
+        return 'AI 服务暂时异常（' + resp.status + '），请稍后重试，或直接在"我的需求"页填写。';
+      }
+      const data = await resp.json();
+      const content = data.choices?.[0]?.message?.content?.trim() || '';
+      // 尝试解析 JSON
+      if (content.startsWith('{') && content.includes('"action":"create_need"')) {
+        try {
+          const parsed = JSON.parse(content);
+          return this.createNeedFromAI(parsed, q);
+        } catch (e) {
+          // JSON 解析失败，原样返回
+          return content;
+        }
+      }
+      return content || '我没能理解，请告诉我您想去哪家医院、哪个科室、哪天去？';
+    } catch (e) {
+      console.error('AI request failed:', e);
+      return this.aiReplyFallback(q);
+    }
+  },
+
+  // AI 解析成功后，自动创建需求
+  createNeedFromAI(parsed, originalQuery) {
+    const u = MockData.patient.user;
+    const med = MockData.patient.medical;
+    const serviceMap = { '半程陪诊': 298, '全程陪诊': 598, '代办跑腿': 98, '陪同复诊': 398 };
+    const amount = serviceMap[parsed.serviceType] || 298;
+    const req = NeedPool.add({
+      patientName: u.name, gender: u.gender, age: u.age, phone: u.phone,
+      emergencyName: u.emergencyName, emergencyPhone: u.emergencyPhone,
+      history: med.history, allergy: med.allergy, medicine: med.medicine, mobility: med.mobility, insurance: med.insurance,
+      hospital: parsed.hospital || '待确认',
+      dept: parsed.dept || '待确认',
+      date: parsed.date || '待确认',
+      serviceType: parsed.serviceType || '半程陪诊',
+      amount: amount,
+      note: parsed.note ? ('AI解析：' + parsed.note + '（原文：' + originalQuery.slice(0,40) + '）') : ('AI对话解析：' + originalQuery.slice(0,60)),
+      status: '待处理',
+    });
+    return '已帮您整理好需求并提交：\n\n• 患者：' + u.name + '（' + u.gender + '，' + u.age + '岁）\n• 医院：' + parsed.hospital + ' · ' + parsed.dept + '\n• 时间：' + parsed.date + '\n• 服务：' + parsed.serviceType + '（¥' + amount + '）\n• 编号：' + req.id + '\n\n需求已同步给后台，工作人员将为您匹配陪诊师并对接医院。\n可在「陪诊进度」里查看最新状态。';
+  },
+
+  // AI 不可用时的降级：本地规则匹配
+  aiReplyFallback(q) {
     if (q.includes('协和') && q.includes('心内科')) {
       const u = MockData.patient.user; const med = MockData.patient.medical;
-      NeedPool.add({
+      const req = NeedPool.add({
         patientName: u.name, gender: u.gender, age: u.age, phone: u.phone,
         emergencyName: u.emergencyName, emergencyPhone: u.emergencyPhone,
         history: med.history, allergy: med.allergy, medicine: med.medicine, mobility: med.mobility, insurance: med.insurance,
         hospital: '北京协和医院', dept: '心内科', date: '下周二', serviceType: '全程陪诊', amount: 598,
         note: 'AI对话解析生成：' + q, status: '待处理',
       });
-      return '我已帮您整理好需求：\n\n• 患者：' + u.name + '（' + u.gender + '，' + u.age + '岁）\n• 病史：' + med.history + '\n• 医院：北京协和医院 · 心内科\n• 时间：下周二\n• 服务：全程陪诊\n\n需求已同步给后台，工作人员将为您匹配陪诊师并对接医院。\n您可以在「陪诊进度」里查看最新状态。';
+      return '已帮您整理好需求并提交：\n\n• 患者：' + u.name + '（' + u.gender + '，' + u.age + '岁）\n• 医院：北京协和医院 · 心内科\n• 时间：下周二\n• 服务：全程陪诊（¥598）\n• 编号：' + req.id + '\n\n需求已同步给后台，工作人员将为您匹配陪诊师并对接医院。';
     }
     if (q.includes('爸') || q.includes('陪诊')) {
       return '好的，我来帮您找陪诊师。请告诉我：\n\n1. 患者是我本人还是家属？\n2. 想去哪个医院、哪个科室？\n3. 期望哪天去？\n\n您也可以直接说"我想约下周二去协和看心内科"，我一次帮您整理好。';
-    }
-    if (q.includes('今天') || q.includes('什么时候') || q.includes('到')) {
-      const t = MockData.patient.todaySchedule;
-      if (t.hasService) return '您今天的安排：\n\n• ' + t.hospital + ' · ' + t.dept + '\n• 时间：' + t.time + '\n• 陪诊师：' + t.escort + '（' + t.escortPhone + '）\n• 当前状态：' + t.escortStatus + '\n\n陪诊师已到达医院，正在为您排队挂号。';
-      return '今天没有陪诊安排。需要约一个吗？';
     }
     return '我在听。您可以直接告诉我：\n\n• "我想约下周二去协和看心内科"\n• "帮我爸找陪诊"\n• "今天陪诊师什么时候到？"\n\n我会帮您整理需求并同步给后台，不用填一堆表单。';
   },

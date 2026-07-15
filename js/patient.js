@@ -309,9 +309,84 @@ const Patient = {
             </div>
           </div>
         `}
+
+        <!-- 评价表单（已完成且未评价时显示）-->
+        ${n.status === '已完成' && !n.feedback ? `
+          <div class="card">
+            <div class="card-title">${P_ICON.star} 服务评价</div>
+            <div class="form-group">
+              <div class="fg-label">总体评分</div>
+              <div class="star-picker" id="starPicker">
+                ${[1,2,3,4,5].map(s => `<span class="sp-star" data-v="${s}" onclick="Patient.pickStar(${s})">★</span>`).join('')}
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="fg-label">评价标签（可多选）</div>
+              <div class="fg-options" id="reviewTags">
+                <div class="fg-option" data-v="服务耐心">服务耐心</div>
+                <div class="fg-option" data-v="专业靠谱">专业靠谱</div>
+                <div class="fg-option" data-v="准时到达">准时到达</div>
+                <div class="fg-option" data-v="沟通顺畅">沟通顺畅</div>
+                <div class="fg-option" data-v="有待改进">有待改进</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="fg-label">详细评价</div>
+              <textarea class="fg-input" id="review_text" placeholder="请描述您的服务体验..." rows="3"></textarea>
+            </div>
+            <button class="btn" style="width:100%;" onclick="Patient.submitFeedback('${n.id}')">提交评价</button>
+          </div>
+        ` : ''}
+
+        ${n.status === '已完成' && n.feedback ? `
+          <div class="card">
+            <div class="card-title">${P_ICON.star} 我的评价</div>
+            <div class="pb-row"><span class="pb-label">评分</span><span class="pb-value" style="color:#eab308;">${'★'.repeat(n.feedback.star)}${'☆'.repeat(5-n.feedback.star)}</span></div>
+            <div class="pb-row"><span class="pb-label">标签</span><span class="pb-value">${n.feedback.tags.join('、')}</span></div>
+            ${n.feedback.text ? `<div class="pb-row"><span class="pb-label">评价</span><span class="pb-value">${n.feedback.text}</span></div>` : ''}
+          </div>
+        ` : ''}
+
         <button class="btn btn-outline" style="margin-top:10px; width:100%;" onclick="App.switchTab(2)">返回</button>
       </div>
     `;
+    // 评价标签多选
+    if (n.status === '已完成' && !n.feedback) {
+      this._starVal = 0;
+      document.querySelectorAll('#reviewTags .fg-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          opt.classList.toggle('sel');
+        });
+      });
+    }
+  },
+
+  // 评价：选择星级
+  pickStar(val) {
+    this._starVal = val;
+    document.querySelectorAll('#starPicker .sp-star').forEach((s, i) => {
+      s.classList.toggle('active', i < val);
+    });
+  },
+
+  // 评价：提交
+  submitFeedback(needId) {
+    const star = this._starVal || 5;
+    const text = document.getElementById('review_text').value.trim();
+    const tags = Array.from(document.querySelectorAll('#reviewTags .fg-option.sel')).map(o => o.dataset.v);
+    const feedback = { star, text, tags: tags.length ? tags : ['服务耐心'], time: new Date().toLocaleString('zh-CN') };
+    NeedPool.update(needId, { feedback });
+    // 同步到后台评价列表
+    const n = NeedPool.getById(needId);
+    MockData.reviews.unshift({
+      id: 'R' + Date.now().toString().slice(-6),
+      patient: n.patientName,
+      escort: n.escortName || '陪诊师',
+      star, text: text || '服务满意',
+      tags: feedback.tags, time: feedback.time, status: star <= 3 ? '差评待处理' : '已处理',
+    });
+    this.toast('评价已提交，感谢您的反馈');
+    setTimeout(() => App.switchTab(2), 1500);
   },
 
   // ===== Tab 4: 我的 =====

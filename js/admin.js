@@ -419,7 +419,8 @@ const Admin = {
         </div>
       ` : ''}
 
-      ${n.status === '待处理' ? `
+      ${n.status === '待处理' || (n.status === '已分配' && !n.hospitalContact) || (n.status === '已对接' && !n.escortName) ? `
+        ${!n.escortName ? `
         <div class="modal-card">
           <div class="card-title">${ICON.cpu} AI 推荐陪诊师</div>
           <div class="ai-hint-text">基于病史、科室、行动能力、区域综合匹配</div>
@@ -435,6 +436,16 @@ const Admin = {
             </div>
           `).join('')}
         </div>
+        ` : `
+        <div class="modal-card">
+          <div class="card-title">${ICON.escorts} 已分配陪诊师</div>
+          <div class="pb-row"><span class="pb-label">姓名</span><span class="pb-value">${n.escortName}</span></div>
+          <div class="pb-row"><span class="pb-label">电话</span><span class="pb-value">${n.escortPhone}</span></div>
+          <button class="btn btn-outline btn-sm" style="margin-top:8px; width:100%;" onclick="Admin.reassignEscort('${n.id}')">重新分配</button>
+        </div>
+        `}
+
+        ${!n.hospitalContact ? `
         <div class="modal-card">
           <div class="card-title">${ICON.building} 对接医院</div>
           ${MockData.hospitals.filter(h=>h.name===n.hospital || h.status==='已合作').slice(0,3).map(h => `
@@ -447,14 +458,30 @@ const Admin = {
             </div>
           `).join('')}
         </div>
-        <button class="btn btn-outline" style="width:100%;" onclick="Admin.cancelNeed('${n.id}')">取消该需求</button>
+        ` : `
+        <div class="modal-card">
+          <div class="card-title">${ICON.hospitals} 已对接医院</div>
+          <div class="pb-row"><span class="pb-label">对接人</span><span class="pb-value">${n.hospitalContact}</span></div>
+        </div>
+        `}
+
+        ${n.escortName && n.hospitalContact ? `
+          <button class="btn" style="width:100%;" onclick="Admin.startService('${n.id}')">确认开始服务</button>
+        ` : ''}
+        ${n.status === '待处理' ? `<button class="btn btn-outline" style="width:100%; margin-top:8px;" onclick="Admin.cancelNeed('${n.id}')">取消该需求</button>` : ''}
       ` : ''}
 
-      ${(n.status === '已分配' || n.status === '已对接') ? `
-        <button class="btn" style="width:100%;" onclick="Admin.startService('${n.id}')">确认开始服务</button>
-      ` : ''}
       ${n.status === '服务中' ? `
         <button class="btn" style="width:100%;" onclick="Admin.finishService('${n.id}')">完成服务</button>
+      ` : ''}
+      ${n.status === '已完成' ? `
+        <div class="modal-card" style="text-align:center; padding:20px;">
+          <div style="color:var(--status-covered); font-size:14px; font-weight:600;">服务已完成</div>
+          ${n.feedback ? `
+            <div style="margin-top:10px; font-size:12px; color:var(--text-muted);">患者评价：${'★'.repeat(n.feedback.star)}星</div>
+            <div style="margin-top:4px; font-size:12px; color:var(--text-secondary);">"${n.feedback.text}"</div>
+          ` : '<div style="margin-top:8px; font-size:12px; color:var(--text-muted);">患者尚未评价</div>'}
+        </div>
       ` : ''}
     `);
   },
@@ -462,15 +489,34 @@ const Admin = {
   assignEscort(needId, escortId) {
     const e = MockData.escorts.find(x => x.id === escortId);
     if (!e) return;
-    NeedPool.update(needId, { status: '已分配', escortName: e.name, escortPhone: e.phone });
+    const n = NeedPool.getById(needId);
+    const patch = { escortName: e.name, escortPhone: e.phone };
+    // 只在还在"待处理"时推进状态
+    if (n.status === '待处理') patch.status = '已分配';
+    else if (n.status === '已对接') patch.status = '已对接'; // 保持，两步都完成
+    NeedPool.update(needId, patch);
     e.status = '服务中';
     this.toast(`已分配陪诊师：${e.name}（患者端已同步）`);
     this.closeModal();
     setTimeout(() => this.openNeed(needId), 300);
   },
 
+  reassignEscort(needId) {
+    NeedPool.update(needId, { escortName: null, escortPhone: null });
+    if (NeedPool.getById(needId).hospitalContact) {
+      NeedPool.update(needId, { status: '已对接' });
+    } else {
+      NeedPool.update(needId, { status: '待处理' });
+    }
+    this.openNeed(needId);
+  },
+
   contactHospital(needId, contact) {
-    NeedPool.update(needId, { status: '已对接', hospitalContact: contact });
+    const n = NeedPool.getById(needId);
+    const patch = { hospitalContact: contact };
+    if (n.status === '待处理') patch.status = '已对接';
+    else if (n.status === '已分配') patch.status = '已分配'; // 保持，两步都完成
+    NeedPool.update(needId, patch);
     this.toast(`已对接医院（联系人：${contact}）`);
     this.closeModal();
     setTimeout(() => this.openNeed(needId), 300);
@@ -501,6 +547,16 @@ const Admin = {
       this.closeModal();
       this.renderContent();
     }
+  },
+
+  // 保存 AI API Key
+  saveAIKey() {
+    const input = document.getElementById('ai_key_input');
+    if (!input) return;
+    const key = input.value.trim();
+    if (!key) { this.toast('请输入 API Key'); return; }
+    AIConfig.setKey(key);
+    this.toast('AI API Key 已保存');
   },
 
   // ===== 陪诊师管理 =====
@@ -770,6 +826,15 @@ const Admin = {
           <div class="ai-monitor-row"><span>智能派单准确率</span><div class="am-bar"><div style="width:94.8%"></div></div><span style="color:var(--status-covered)">94.8%</span></div>
           <div class="ai-monitor-row"><span>情绪识别准确率</span><div class="am-bar"><div style="width:91.5%"></div></div><span style="color:var(--status-covered)">91.5%</span></div>
           <div class="ai-monitor-row"><span>状态</span><div></div><span class="status-badge accepted">运行正常</span></div>
+          <div style="margin-top:14px; border-top:1px solid var(--border-color); padding-top:12px;">
+            <div class="fg-label" style="margin-bottom:6px;">DeepSeek API Key</div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input type="password" class="fg-input" id="ai_key_input" value="${AIConfig.apiKey}" placeholder="sk-..." style="flex:1; font-size:12px;" />
+              <button class="btn btn-sm" onclick="Admin.saveAIKey()">保存</button>
+            </div>
+            <div class="cp-sub" style="margin-top:6px;">模型：${AIConfig.model} · 端点：${AIConfig.baseUrl}</div>
+            <div class="cp-sub" style="margin-top:2px; color:var(--text-muted);">Key 存储在浏览器 localStorage，不会上传服务器</div>
+          </div>
         </div>
         <div class="modal-card">
           <div class="card-title">${ICON.scroll} 审计日志</div>

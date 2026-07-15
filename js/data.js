@@ -18,6 +18,19 @@ const NeedPool = {
   },
 };
 
+// ========== AI 配置（DeepSeek API）==========
+// 真实接入 DeepSeek Chat API，支持自然语言理解患者需求并自动填写表单
+const AIConfig = {
+  apiKey: localStorage.getItem('huwuyou_ai_key') || 'sk-3682d3ff55984b5ba1058b2b0405fc4f',
+  baseUrl: 'https://api.deepseek.com/v1',
+  model: 'deepseek-chat',
+  enabled: true,
+  setKey(key) {
+    this.apiKey = key;
+    localStorage.setItem('huwuyou_ai_key', key);
+  },
+};
+
 // ========== 模拟数据 ==========
 const MockData = {
   // ===== 患者端 =====
@@ -147,6 +160,15 @@ const MockData = {
       history: '糖尿病、视网膜病变', allergy: '磺胺类', medicine: '胰岛素', mobility: '可独立行走', insurance: '北京医保',
       hospital: '北京同仁医院', dept: '眼科', date: '07-18', serviceType: '半程陪诊',
       note: '视力较差需搀扶', status: '待处理', createTime: '07-15 10:12', amount: 298 },
+    // 给患者王秀兰加一条已完成的预置订单，让患者端进度页初始有数据
+    { patientName: '王秀兰', gender: '女', age: 68, phone: '138 8866 8866',
+      emergencyName: '王强', emergencyPhone: '139****1122',
+      history: '高血压、冠心病', allergy: '青霉素', medicine: '降压药', mobility: '可独立行走', insurance: '北京医保',
+      hospital: '北京协和医院', dept: '心内科', date: '07-10', serviceType: '全程陪诊',
+      note: '老人耳背，需要大声说话', status: '已完成', createTime: '07-08 14:30', amount: 598,
+      escortName: '李敏', escortPhone: '137****4488', hospitalContact: '刘主任',
+      feedback: { star: 5, text: '李敏非常耐心，全程陪同挂号看病取药，老人很满意', tags: ['服务耐心', '专业靠谱'], time: '07-10 16:20' },
+    },
   ],
 
   kpi: {
