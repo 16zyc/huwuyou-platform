@@ -2,62 +2,13 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#FF8A3D" />
-<title>护无忧·智陪诊全链路平台</title>
+<title>护无忧 · 智陪诊全链路平台</title>
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-<!-- 手机外壳（PC端居中显示手机框，移动端全屏） -->
-<div id="phone-frame">
-  <div id="app">
-    <!-- 顶部双端切换条 -->
-    <header class="role-bar">
-      <div class="role-brand">
-        <span class="brand-logo">护</span>
-        <div class="brand-text">
-          <div class="brand-name">护无忧</div>
-          <div class="brand-sub">智陪诊 · HomMed AI</div>
-        </div>
-      </div>
-      <div class="role-switcher" id="roleSwitcher">
-        <button class="role-btn active" data-role="patient">患者端</button>
-        <button class="role-btn" data-role="admin">管理后台</button>
-      </div>
-    </header>
-
-    <!-- 主内容区 -->
-    <main id="screen" class="screen"></main>
-
-    <!-- 底部导航 -->
-    <nav class="tabbar" id="tabbar"></nav>
-
-    <!-- AI 悬浮球（仅患者端显示） -->
-    <div class="ai-float" id="aiFloat" hidden>
-      <div class="ai-float-ball">AI</div>
-    </div>
-    <!-- AI 助手面板 -->
-    <div class="ai-panel" id="aiPanel" hidden>
-      <div class="ai-panel-head">
-        <span>AI 陪伴助理</span>
-        <button class="ai-close" id="aiClose">×</button>
-      </div>
-      <div class="ai-panel-body">
-        <div class="ai-msg ai-bot">您好，我是护无忧 AI 陪伴助理。我不会让您填一堆表单——您可以直接告诉我："我想约下周二去协和看心内科"，我会帮您整理好需求并同步给后台。</div>
-      </div>
-      <div class="ai-quick">
-        <button data-q="我想约下周二去协和看心内科">约下周二去协和看心内科</button>
-        <button data-q="我爸65岁高血压想找陪诊">帮我爸找陪诊</button>
-        <button data-q="今天陪诊师什么时候到？">今天陪诊师什么时候到？</button>
-      </div>
-      <div class="ai-input">
-        <input type="text" id="aiInput" placeholder="说话或打字，我来帮您整理需求" />
-        <button id="aiSend">发送</button>
-      </div>
-    </div>
-  </div>
-</div>
-
+<div id="root"></div>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
 <script src="js/patient.js"></script>
