@@ -64,8 +64,8 @@ const Admin = {
           <div class="as-brand">
             <div class="as-logo">护</div>
             <div>
-              <div class="as-name">护无忧智陪诊</div>
-              <div class="as-sub">运营管理平台</div>
+              <div class="as-name">护无忧</div>
+              <div class="as-sub">智陪诊运营平台</div>
             </div>
           </div>
           <nav class="as-menu" id="asMenu"></nav>
@@ -87,6 +87,8 @@ const Admin = {
         <div class="admin-main">
           <header class="admin-topbar">
             <div class="at-left">
+              <span class="at-root">护无忧</span>
+              <span class="at-sep">/</span>
               <div class="at-crumb" id="atCrumb">工作台</div>
             </div>
             <div class="at-right">
@@ -252,10 +254,10 @@ const Admin = {
       { icon: ICON.track, num: k.inService, label: '陪诊中', cls: 'kpi-blue', trend: '实时', trendType: 'neutral' },
       { icon: ICON.activity, num: k.doneRate + '%', label: '完成率', cls: 'kpi-green', trend: '↑ 2%', trendType: 'up' },
       { icon: ICON.reviews, num: k.satisfaction, label: '满意度', cls: 'kpi-green', trend: '稳定', trendType: 'neutral' },
-      { icon: ICON.alert, num: k.complaintRate + '%', label: '投诉率', cls: 'kpi-red', trend: '↓ 0.3%', trendType: 'down' },
+      { icon: ICON.alert, num: k.complaintRate + '%', label: '投诉率', cls: 'kpi-red', trend: '↓ 0.3%', trendType: 'down', trendPositive: true },
     ];
     el.innerHTML = `
-      <div class="page-head"><h2>运营工作台</h2><div>实时数据 · ${new Date().toLocaleDateString('zh-CN')}</div></div>
+      <div class="page-head"><h2>运营工作台</h2><div>实时数据 · ${new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit' })}</div></div>
       <!-- KPI 卡片（icon 容器 + 数值 + 标签）-->
       <div class="kpi-grid">
         ${kpis.map(kp => `
@@ -264,7 +266,7 @@ const Admin = {
             <div class="kpi-body">
               <div class="kpi-num">${kp.num}</div>
               <div class="kpi-label">${kp.label}</div>
-              <div class="kpi-trend ${kp.trendType}">${kp.trendType === 'up' ? ICON.trendUp : kp.trendType === 'down' ? ICON.trendDown : ICON.dot}<span>${kp.trend}</span></div>
+              <div class="kpi-trend ${kp.trendType} ${kp.trendPositive ? 'up' : ''}">${kp.trendType === 'up' ? ICON.trendUp : kp.trendType === 'down' ? ICON.trendDown : ICON.dot}<span>${kp.trend}</span></div>
             </div>
           </div>
         `).join('')}

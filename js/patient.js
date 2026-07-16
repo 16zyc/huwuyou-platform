@@ -101,44 +101,44 @@ const Patient = {
     const u = MockData.patient.user;
     const today = MockData.patient.todaySchedule;
     el.innerHTML = `
-      <!-- 问候 -->
+      <!-- 问候 + 今日提示（医疗专业蓝调主卡）-->
       <div class="hero-card">
         <div class="hero-greet">${u.name}，您好</div>
         <div class="hero-weather">
           <span>北京 · 多云转晴 · 22°</span>
         </div>
-        <div style="margin-top:8px; font-size:12px; color:var(--text-secondary);">今日提示：${today.tip}</div>
+        <div class="hero-tip">今日提示：${today.tip}</div>
       </div>
 
-      <!-- AI 陪伴入口（核心大入口）-->
+      <!-- 智能陪诊助理入口 -->
       <div class="ai-entry" onclick="App.openAI()">
         <div class="ai-entry-icon">
           <div class="ai-orb">${P_ICON.ai}</div>
         </div>
         <div class="ai-entry-text">
-          <div class="ai-entry-title">智能陪诊助手</div>
+          <div class="ai-entry-title">智能陪诊助理</div>
           <div class="ai-entry-sub">语音 / 文字描述需求，自动整理并同步给后台</div>
         </div>
         <div class="ai-entry-arrow">${P_ICON.chevronRight}</div>
       </div>
 
       <!-- 快捷入口 -->
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:12px;">
-        <div class="quick-entry" style="padding:12px 8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); text-align:center; cursor:pointer;" onclick="App.switchTab(1)">
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px;">
+        <div class="quick-entry" style="padding:14px 8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); text-align:center; cursor:pointer; transition:all .15s;" onclick="App.switchTab(1)">
           <div style="display:flex; justify-content:center; margin-bottom:6px;">${P_ICON.clipboard}</div>
           <div style="font-size:12px; color:var(--text-primary); font-weight:500;">提交需求</div>
         </div>
-        <div class="quick-entry" style="padding:12px 8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); text-align:center; cursor:pointer;" onclick="App.switchTab(2)">
+        <div class="quick-entry" style="padding:14px 8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); text-align:center; cursor:pointer; transition:all .15s;" onclick="App.switchTab(2)">
           <div style="display:flex; justify-content:center; margin-bottom:6px;">${P_ICON.mapPin}</div>
           <div style="font-size:12px; color:var(--text-primary); font-weight:500;">陪诊进度</div>
         </div>
-        <div class="quick-entry" style="padding:12px 8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); text-align:center; cursor:pointer;" onclick="App.switchTab(3)">
+        <div class="quick-entry" style="padding:14px 8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); text-align:center; cursor:pointer; transition:all .15s;" onclick="App.switchTab(3)">
           <div style="display:flex; justify-content:center; margin-bottom:6px;">${P_ICON.building}</div>
           <div style="font-size:12px; color:var(--text-primary); font-weight:500;">医院介绍</div>
         </div>
       </div>
 
-      <!-- 今日状态卡 -->
+      <!-- 今日陪诊卡 -->
       ${today.hasService ? `
         <div class="today-card">
           <div class="tc-head">
@@ -149,12 +149,12 @@ const Patient = {
           <div class="tc-escort">
             <span class="tc-avatar">${today.escortAvatar}</span>
             <div>
-              <div style="font-weight:600;">陪诊师 ${today.escort}</div>
-              <div style="font-size:11px; color:var(--text-muted);">${today.escortStatus}</div>
+              <div style="font-weight:600; font-size:13px;">陪诊师 ${today.escort}</div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">${today.escortStatus}</div>
             </div>
             <a href="tel:${today.escortPhone}" class="tc-call">致电</a>
           </div>
-          <button class="btn btn-outline btn-sm" style="margin-top:10px; width:100%;" onclick="App.switchTab(2)">查看实时进度</button>
+          <button class="btn btn-outline btn-sm" style="margin-top:12px; width:100%;" onclick="App.switchTab(2)">查看实时进度</button>
         </div>
       ` : `
         <div class="today-card today-empty">
@@ -175,8 +175,6 @@ const Patient = {
           <span>客服热线</span>
         </button>
       </div>
-
-      <div class="slogan-bar">护无忧 · 全程陪诊 · 安全放心</div>
     `;
   },
 

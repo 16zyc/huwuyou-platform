@@ -27,9 +27,8 @@ const App = {
           <div class="login-brand">
             <div class="lb-logo">护</div>
             <div class="lb-name">护无忧</div>
-            <div class="lb-sub">智陪诊全链路平台 · HomMed AI</div>
+            <div class="lb-sub">智陪诊全链路平台</div>
           </div>
-          <div class="login-slogan">专业陪诊服务 · 安全放心</div>
           <div class="role-cards">
             <div class="role-card role-card-patient" onclick="App.goPatientLogin()">
               <div class="rc-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
@@ -44,7 +43,7 @@ const App = {
               <div class="rc-arrow"><svg class="icon" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
             </div>
           </div>
-          <div class="login-foot">© 2026 护无忧 · 智陪诊全链路平台</div>
+          <div class="login-foot">© 2026 护无忧 · 智陪诊全链路平台 · v2.0</div>
         </div>
       </div>
     `;
@@ -76,7 +75,7 @@ const App = {
             <button class="btn btn-login" onclick="App.patientLogin()">登 录</button>
             <button class="btn btn-outline" style="margin-top:10px;" onclick="App.patientQuickLogin()">一键演示登录</button>
             <div class="login-tip">
-              <div class="ai-icon-sm">AI</div>
+              <div class="ai-icon-sm">智</div>
               <div>登录后可使用智能陪诊助理：说话就能提交需求</div>
             </div>
           </div>
@@ -181,10 +180,10 @@ const App = {
               <span class="brand-logo">护</span>
               <div class="brand-text">
                 <div class="brand-name">护无忧</div>
-                <div class="brand-sub">智陪诊 · HomMed AI</div>
+                <div class="brand-sub">智陪诊全链路平台</div>
               </div>
             </div>
-            <button class="role-btn" onclick="App.logout()" style="padding:6px 10px; font-size:12px;">退出</button>
+            <button class="role-btn" onclick="App.logout()">退出</button>
           </header>
           <main id="screen" class="screen"></main>
           <nav class="tabbar" id="tabbar"></nav>
@@ -193,11 +192,11 @@ const App = {
           </div>
           <div class="ai-panel" id="aiPanel" hidden>
             <div class="ai-panel-head">
-              <span>AI 陪伴助理</span>
+              <span>智能陪诊助理</span>
               <button class="ai-close" id="aiClose">×</button>
             </div>
             <div class="ai-panel-body">
-              <div class="ai-msg ai-bot">您好，我是 AI 陪伴助理。您可以直接说"我想约下周二去协和看心内科"，我帮您整理好需求并同步给后台。</div>
+              <div class="ai-msg ai-bot">您好，我是智能陪诊助理。您可以直接说"我想约下周二去协和看心内科"，我帮您整理好需求并同步给后台。</div>
             </div>
             <div class="ai-quick">
               <button data-q="我想约下周二去协和看心内科">约下周二去协和看心内科</button>
