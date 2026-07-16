@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap');
 
 :root {
+  /* 完全对齐科研2 SaaS 系统 */
   --bg-primary: #f5f7fa;
   --bg-secondary: #ffffff;
   --bg-tertiary: #eef1f6;
@@ -12,18 +13,25 @@
   --text-primary: #1e293b;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  --accent: #2563a8;
-  --accent-light: #3b6cb5;
-  --accent-bg: rgba(37,99,168,0.08);
-  --accent-deep: #1d4f8a;
-  --status-covered: #15803d;
+  /* 主色与科研2 完全一致 */
+  --accent-blue: #3b6cb5;
+  --accent-blue-light: #4a7cbe;
+  --accent: #3b6cb5;
+  --accent-light: #4a7cbe;
+  --accent-bg: rgba(59,108,181,0.08);
+  --accent-deep: #2c5a9e;
+  --accent-amber: #c4922e;
+  --accent-amber-light: #d4a843;
+  /* 状态色与科研2 一致 */
+  --status-covered: #16a34a;
   --status-partial: #ca8a04;
   --status-notfound: #dc2626;
   --status-pending: #94a3b8;
+  --status-qualified: #ea580c;
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.03);
   --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
-  --radius: 6px;
-  --radius-lg: 8px;
+  --radius: 8px;
+  --radius-lg: 12px;
   --tabbar-h: 56px;
 }
 [hidden] { display: none !important; }
@@ -77,9 +85,9 @@ body.loginSelect, body.patientLogin, body.adminLogin { background: var(--bg-prim
 .code-btn:disabled { color: var(--text-muted); border-color: var(--border-color); background: var(--bg-tertiary); }
 
 .btn { width: 100%; padding: 10px 16px; border: none; border-radius: var(--radius); background: var(--accent); color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-.btn:hover { background: var(--accent-light); box-shadow: 0 2px 8px rgba(59,108,181,0.25); }
+.btn:hover { background: var(--accent-light); box-shadow: 0 2px 8px rgba(59, 108, 181, 0.3); }
 .btn:active { transform: scale(0.99); }
-.btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-color); }
+.btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-light); }
 .btn-outline:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-light); box-shadow: none; }
 .btn-sm { width: auto; padding: 6px 12px; font-size: 12px; }
 .btn-link { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px; padding: 4px 8px; }
@@ -154,6 +162,15 @@ body.patient { background: var(--bg-tertiary); display: flex; justify-content: c
 .page-head h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
 .page-head > div { margin-top: 4px; font-size: 12px; color: var(--text-muted); }
 .card { background: var(--bg-card); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; border: 1px solid var(--border-color); }
+/* 对齐科研2 .card-hover */
+.card-hover { cursor: pointer; transition: all .2s; }
+.card-hover:hover { background: var(--bg-hover); border-color: var(--border-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+
+/* 对齐科研2 通用状态类（与 .status-badge 并存）*/
+.status-covered { color: var(--status-covered); background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.2); }
+.status-partial { color: var(--status-partial); background: rgba(202,138,4,0.08); border: 1px solid rgba(202,138,4,0.2); }
+.status-notfound { color: var(--status-notfound); background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2); }
+.status-pending { color: var(--status-pending); background: rgba(148,163,184,0.08); border: 1px solid rgba(148,163,184,0.2); }
 .card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
 .card-title svg { width: 16px; height: 16px; stroke: var(--accent); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 .pb-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
