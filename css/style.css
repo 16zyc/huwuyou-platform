@@ -105,7 +105,7 @@ body.patient { background: var(--bg-tertiary); display: flex; justify-content: c
 .brand-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 .brand-sub { font-size: 9px; color: var(--text-muted); }
 .role-btn { padding: 6px 14px; border: 1px solid var(--border-color); background: #fff; border-radius: 16px; font-size: 12px; cursor: pointer; color: var(--text-secondary); }
-.screen { flex: 1; padding: 16px; padding-bottom: calc(var(--tabbar-h) + 16px); overflow-y: auto; }
+.screen { flex: 1; padding: 14px 14px; padding-bottom: calc(var(--tabbar-h) + 18px); overflow-y: auto; }
 .fade-in { animation: fadeIn .25s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
@@ -153,13 +153,13 @@ body.patient { background: var(--bg-tertiary); display: flex; justify-content: c
 .page-head { margin-bottom: 16px; }
 .page-head h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); }
 .page-head > div { margin-top: 4px; font-size: 12px; color: var(--text-muted); }
-.card { background: var(--bg-card); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--border-color); }
+.card { background: var(--bg-card); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; border: 1px solid var(--border-color); }
 .card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
 .card-title svg { width: 16px; height: 16px; stroke: var(--accent); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-.pb-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+.pb-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
 .pb-row:last-child { border-bottom: none; }
-.pb-label { color: var(--text-muted); }
-.pb-value { font-weight: 500; text-align: right; color: var(--text-primary); }
+.pb-label { color: var(--text-muted); flex-shrink: 0; min-width: 70px; }
+.pb-value { font-weight: 500; text-align: right; color: var(--text-primary); flex: 1; word-break: break-word; }
 
 .section-title { display: flex; justify-content: space-between; align-items: center; margin: 16px 0 10px; }
 .section-title h3 { font-size: 14px; font-weight: 600; }
@@ -179,10 +179,14 @@ body.patient { background: var(--bg-tertiary); display: flex; justify-content: c
 .tag-red { background: rgba(220,38,38,0.08); color: var(--status-notfound); border: 1px solid rgba(220,38,38,0.15); }
 .tag-success { background: rgba(22,163,74,0.08); color: var(--status-covered); border: 1px solid rgba(22,163,74,0.15); }
 
-.step-bar { display: flex; gap: 6px; }
+.step-bar { display: flex; gap: 4px; }
 .step-bar .step { flex: 1; height: 4px; border-radius: 2px; background: var(--bg-tertiary); transition: background .2s; }
 .step-bar .step.done { background: var(--accent); }
 .step-bar .step.active { background: var(--accent-light); }
+/* 进度条文字行：允许换行避免挤压 */
+.step-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 6px; gap: 2px; }
+.step-labels span { flex: 1; text-align: center; line-height: 1.2; }
+.step-labels span.active { color: var(--accent); font-weight: 700; }
 
 .empty { text-align: center; padding: 40px 14px; color: var(--text-muted); font-size: 13px; }
 .empty .em-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
@@ -249,14 +253,21 @@ body.patient { background: var(--bg-tertiary); display: flex; justify-content: c
 .ph-avatar { width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 10px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; }
 .ph-name { font-size: 17px; font-weight: 600; }
 .ph-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-.config-row { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--border-color); cursor: pointer; }
+.config-row { display: flex; align-items: center; gap: 10px; padding: 13px 4px; border-bottom: 1px solid var(--border-color); cursor: pointer; border-radius: 4px; transition: background .15s; }
 .config-row:last-child { border-bottom: none; }
-.config-row:hover { background: var(--bg-hover); margin: 0 -16px; padding: 12px 16px; }
-.config-row .cr-label { flex: 1; font-size: 14px; }
+.config-row:hover { background: var(--bg-hover); }
+.config-row:active { background: var(--bg-tertiary); }
+.config-row .cr-label { flex: 1; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+.config-row .cr-label svg { width: 18px; height: 18px; stroke: var(--accent); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .config-row .cr-val { font-size: 12px; color: var(--text-muted); }
+.config-row .cr-arrow { color: var(--text-muted); display: flex; }
+.config-row .cr-arrow svg { width: 16px; height: 16px; stroke: var(--text-muted); stroke-width: 2; fill: none; }
+
+/* 首页快捷入口图标 */
+.quick-entry svg.icon { width: 22px; height: 22px; stroke: var(--accent); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
 /* AI 悬浮球 + 面板（医疗专业风：方形+蓝调，无脉冲）*/
-.ai-float { position: fixed; right: 16px; bottom: calc(var(--tabbar-h) + 16px); width: 48px; height: 48px; border-radius: var(--radius); background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-md); z-index: 100; border: 1px solid var(--accent-deep); }
+.ai-float { position: fixed; right: 14px; bottom: calc(var(--tabbar-h) + 76px); width: 48px; height: 48px; border-radius: var(--radius); background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: var(--shadow-md); z-index: 100; border: 1px solid var(--accent-deep); }
 .ai-float-ball { display: flex; align-items: center; justify-content: center; }
 .ai-float-ball svg { width: 22px; height: 22px; stroke: #fff; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .ai-panel { position: fixed; left: 8px; right: 8px; bottom: calc(var(--tabbar-h) + 8px); max-width: 404px; margin: 0 auto; background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-md); z-index: 101; display: flex; flex-direction: column; max-height: 70vh; border: 1px solid var(--border-color); }

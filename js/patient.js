@@ -122,6 +122,22 @@ const Patient = {
         <div class="ai-entry-arrow">${P_ICON.chevronRight}</div>
       </div>
 
+      <!-- 快捷入口 -->
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:12px;">
+        <div class="quick-entry" style="padding:12px 8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); text-align:center; cursor:pointer;" onclick="App.switchTab(1)">
+          <div style="display:flex; justify-content:center; margin-bottom:6px;">${P_ICON.clipboard}</div>
+          <div style="font-size:12px; color:var(--text-primary); font-weight:500;">提交需求</div>
+        </div>
+        <div class="quick-entry" style="padding:12px 8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); text-align:center; cursor:pointer;" onclick="App.switchTab(2)">
+          <div style="display:flex; justify-content:center; margin-bottom:6px;">${P_ICON.mapPin}</div>
+          <div style="font-size:12px; color:var(--text-primary); font-weight:500;">陪诊进度</div>
+        </div>
+        <div class="quick-entry" style="padding:12px 8px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); text-align:center; cursor:pointer;" onclick="App.switchTab(3)">
+          <div style="display:flex; justify-content:center; margin-bottom:6px;">${P_ICON.building}</div>
+          <div style="font-size:12px; color:var(--text-primary); font-weight:500;">医院介绍</div>
+        </div>
+      </div>
+
       <!-- 今日状态卡 -->
       ${today.hasService ? `
         <div class="today-card">
@@ -461,7 +477,7 @@ const Patient = {
     el.innerHTML = `
       <div class="page-head">
         <h2>陪诊进度</h2>
-        <div style="font-size:11px; color:var(--text-muted);">您提交的所有需求进度</div>
+        <div style="font-size:12px; color:var(--text-muted);">您提交的所有需求进度</div>
       </div>
       ${needs.length === 0 ? `
         <div class="empty">
@@ -471,22 +487,36 @@ const Patient = {
         </div>
       ` : needs.map(n => {
         const flow = ['待处理','已分配','已对接','服务中','已完成'];
+        // 短文字标签，避免在窄屏挤压
+        const shortLabels = ['待处理','已分配','已对接','服务中','已完成'];
         const idx = flow.indexOf(n.status);
+        const validIdx = idx < 0 ? 0 : idx;
         return `
-          <div class="card" onclick="Patient.openNeedDetail('${n.id}')">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="card" onclick="Patient.openNeedDetail('${n.id}')" style="cursor:pointer;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
               <span class="status-badge ${n.status==='待处理'?'pending':n.status==='已分配'?'accepted':n.status==='已对接'?'accepted':n.status==='服务中'?'serving':'done'}">${n.status}</span>
               <span style="font-size:11px; color:var(--text-muted);">${n.id}</span>
             </div>
-            <div style="margin-top:8px; font-weight:600; font-size:14px;">${n.hospital} · ${n.dept}</div>
-            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">期望：${n.date} · ${n.serviceType}</div>
-            ${n.escortName ? `<div style="font-size:12px; margin-top:6px;">陪诊师：${n.escortName} ${n.escortPhone ? '· '+n.escortPhone : ''}</div>` : ''}
+            <div style="margin-top:10px; font-weight:600; font-size:15px; color:var(--text-primary);">${n.hospital}</div>
+            <div style="font-size:13px; color:var(--text-secondary); margin-top:3px;">${n.dept} · ${n.date} · ${n.serviceType}</div>
+            ${n.escortName ? `
+              <div style="display:flex; align-items:center; gap:8px; margin-top:8px; padding:8px 10px; background:var(--accent-bg); border-radius:6px;">
+                <div style="width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600;">${n.escortName[0]}</div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:13px; font-weight:600; color:var(--text-primary);">${n.escortName}</div>
+                  <div style="font-size:11px; color:var(--text-muted);">${n.escortPhone || ''}</div>
+                </div>
+                ${n.escortPhone ? `<a href="tel:${n.escortPhone}" onclick="event.stopPropagation()" style="padding:6px 10px; background:var(--accent); color:#fff; border-radius:6px; font-size:12px; text-decoration:none;">${P_ICON.phone} 电话</a>` : ''}
+              </div>
+            ` : `
+              <div style="margin-top:8px; padding:8px 10px; background:var(--bg-tertiary); border-radius:6px; font-size:12px; color:var(--text-muted); text-align:center;">等待后台分配陪诊师</div>
+            `}
             <!-- 进度条 -->
-            <div class="step-bar" style="margin-top:10px;">
-              ${flow.map((s, i) => `<div class="step ${i < idx ? 'done' : ''} ${i === idx ? 'active' : ''}"></div>`).join('')}
+            <div class="step-bar" style="margin-top:12px;">
+              ${flow.map((s, i) => `<div class="step ${i < validIdx ? 'done' : ''} ${i === validIdx ? 'active' : ''}"></div>`).join('')}
             </div>
-            <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-muted); margin-top:4px;">
-              ${flow.map((s, i) => `<span style="${i===idx?'color:var(--accent);font-weight:700;':''}">${s}</span>`).join('')}
+            <div class="step-labels">
+              ${shortLabels.map((s, i) => `<span class="${i === validIdx ? 'active' : ''}">${s}</span>`).join('')}
             </div>
           </div>
         `;
@@ -712,20 +742,93 @@ const Patient = {
   // ===== Tab 5: 我的 =====
   renderProfile(el) {
     const u = MockData.patient.user;
+    const med = MockData.patient.medical;
+    // 统计
+    const myNeeds = NeedPool.list.filter(n => n.patientName === u.name);
+    const doneCount = myNeeds.filter(n => n.status === '已完成').length;
+    const activeCount = myNeeds.filter(n => ['待处理','已分配','已对接','服务中'].includes(n.status)).length;
+    const reviewedCount = myNeeds.filter(n => n.feedback).length;
+    const recentReview = myNeeds.find(n => n.feedback);
     el.innerHTML = `
       <div class="profile-head">
         <div class="ph-avatar">${u.avatar}</div>
         <div class="ph-name">${u.name}</div>
         <div class="ph-sub">${u.gender} · ${u.age}岁 · ${u.phone}</div>
       </div>
-      <div class="card">
-        <div class="config-row" onclick="Patient.toast('查看权益卡')"><span class="cr-label" style="display:flex; align-items:center; gap:8px;">${P_ICON.card} 权益卡</span><span class="cr-val">剩余 2 次</span><span style="color:var(--text-muted)">${P_ICON.chevronRight}</span></div>
-        <div class="config-row" onclick="Patient.toast('查看历史陪诊')"><span class="cr-label" style="display:flex; align-items:center; gap:8px;">${P_ICON.clipboard} 历史陪诊</span><span style="color:var(--text-muted)">${P_ICON.chevronRight}</span></div>
-        <div class="config-row" onclick="Patient.toast('打开评价')"><span class="cr-label" style="display:flex; align-items:center; gap:8px;">${P_ICON.star} 我的评价</span><span style="color:var(--text-muted)">${P_ICON.chevronRight}</span></div>
-        <div class="config-row" onclick="Patient.toast('打开设置')"><span class="cr-label" style="display:flex; align-items:center; gap:8px;">${P_ICON.settings} 设置</span><span style="color:var(--text-muted)">${P_ICON.chevronRight}</span></div>
-        <div class="config-row" onclick="Patient.toast('联系客服')"><span class="cr-label" style="display:flex; align-items:center; gap:8px;">${P_ICON.headset} 在线客服</span><span style="color:var(--text-muted)">${P_ICON.chevronRight}</span></div>
+
+      <!-- 服务统计 -->
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div style="display:flex; text-align:center;">
+          <div style="flex:1; padding:14px 8px; border-right:1px solid var(--border-color);">
+            <div style="font-size:20px; font-weight:700; color:var(--accent);">${doneCount}</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">已完成</div>
+          </div>
+          <div style="flex:1; padding:14px 8px; border-right:1px solid var(--border-color);">
+            <div style="font-size:20px; font-weight:700; color:var(--status-partial);">${activeCount}</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">进行中</div>
+          </div>
+          <div style="flex:1; padding:14px 8px;">
+            <div style="font-size:20px; font-weight:700; color:var(--status-covered);">${reviewedCount}</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">已评价</div>
+          </div>
+        </div>
       </div>
-      <button class="btn btn-outline" style="margin-top:14px;" onclick="Patient.toast('已退出登录（演示）')">退出登录</button>
+
+      <!-- 权益卡 -->
+      <div class="card" style="background:linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%); color:#fff; border:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:12px; opacity:0.9;">${P_ICON.card} 权益卡</div>
+            <div style="font-size:18px; font-weight:700; margin-top:4px;">剩余 2 次</div>
+            <div style="font-size:11px; opacity:0.8; margin-top:2px;">有效期至 2026-12-31</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px; opacity:0.9;">累计使用</div>
+            <div style="font-size:16px; font-weight:600; margin-top:2px;">${doneCount} 次</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 常用信息 -->
+      <div class="card">
+        <div class="card-title">${P_ICON.user} 常用信息</div>
+        <div class="pb-row"><span class="pb-label">医保类型</span><span class="pb-value">${med.insurance}</span></div>
+        <div class="pb-row"><span class="pb-label">既往病史</span><span class="pb-value">${med.history}</span></div>
+        <div class="pb-row"><span class="pb-label">过敏史</span><span class="pb-value" style="color:${med.allergy && med.allergy !== '无' ? 'var(--status-notfound)' : 'inherit'}">${med.allergy}</span></div>
+        <div class="pb-row"><span class="pb-label">行动能力</span><span class="pb-value">${med.mobility}</span></div>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px; width:100%;" onclick="App.switchTab(1)">更新我的信息</button>
+      </div>
+
+      <!-- 紧急联系人 -->
+      <div class="card" style="border-left:3px solid var(--status-notfound);">
+        <div class="card-title">${P_ICON.phone} 紧急联系人</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div>
+            <div style="font-size:14px; font-weight:600;">${u.emergencyName}</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${u.emergencyPhone}</div>
+          </div>
+          <a href="tel:${u.emergencyPhone}" class="btn btn-sm" style="display:flex; align-items:center; gap:6px; text-decoration:none;">${P_ICON.phone} 拨号</a>
+        </div>
+      </div>
+
+      ${recentReview ? `
+      <!-- 最近评价 -->
+      <div class="card">
+        <div class="card-title">${P_ICON.star} 最近评价</div>
+        <div style="font-size:14px; color:#eab308; margin-bottom:4px;">${'★'.repeat(recentReview.feedback.star)}${'☆'.repeat(5-recentReview.feedback.star)}</div>
+        <div style="font-size:12px; color:var(--text-secondary); line-height:1.5;">"${recentReview.feedback.text || '满意'}"</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">${recentReview.feedback.time} · ${recentReview.escortName || '陪诊师'}</div>
+      </div>
+      ` : ''}
+
+      <!-- 功能列表 -->
+      <div class="card">
+        <div class="config-row" onclick="Patient.toast('查看历史陪诊')"><span class="cr-label">${P_ICON.clipboard} 历史陪诊</span><span class="cr-val">${doneCount} 条</span><span class="cr-arrow">${P_ICON.chevronRight}</span></div>
+        <div class="config-row" onclick="Patient.toast('打开设置')"><span class="cr-label">${P_ICON.settings} 设置</span><span class="cr-arrow">${P_ICON.chevronRight}</span></div>
+        <div class="config-row" onclick="Patient.toast('联系客服')"><span class="cr-label">${P_ICON.headset} 在线客服</span><span class="cr-arrow">${P_ICON.chevronRight}</span></div>
+      </div>
+
+      <button class="btn btn-outline" style="margin-top:6px; margin-bottom:20px;" onclick="App.logout()">退出登录</button>
     `;
   },
 
