@@ -35,19 +35,20 @@ const ICON = {
 // ========== 管理后台（SaaS 布局：左侧导航 + 顶栏 + 主内容区）==========
 const Admin = {
   currentMenu: 'dashboard', // dashboard|patients|needs|escorts|hospitals|track|finance|reviews|system
+  priceChanges: [], // 改价操作记录（用于"服务收费"页底部展示）
 
   // 9 大菜单（分组，对齐科研2 lucide-react 图标）
   menus: [
     { group: '运营总览', items: [
       { id: 'dashboard', name: '工作台', icon: ICON.dashboard },
       { id: 'track', name: '服务跟踪', icon: ICON.track },
-      { id: 'finance', name: '财务结算', icon: ICON.finance },
+      { id: 'finance', name: '服务收费', icon: ICON.finance },
     ]},
     { group: '业务管理', items: [
       { id: 'patients', name: '患者档案', icon: ICON.patients },
       { id: 'needs', name: '需求处理', icon: ICON.needs },
       { id: 'escorts', name: '陪诊师管理', icon: ICON.escorts },
-      { id: 'hospitals', name: '医院对接', icon: ICON.hospitals },
+      { id: 'hospitals', name: '医院审批', icon: ICON.hospitals },
     ]},
     { group: '系统', items: [
       { id: 'reviews', name: '评价反馈', icon: ICON.reviews },
@@ -93,9 +94,10 @@ const Admin = {
                 <input placeholder="搜索患者/订单/陪诊师..." />
                 <span class="at-search-icon">${ICON.search}</span>
               </div>
-              <div class="at-alert" id="atAlert" title="风险预警">
+              <div class="at-alert at-notify-wrap" id="atNotify" title="通知提醒">
                 ${ICON.bell}
-                ${MockData.alerts.filter(a=>a.status==='未处理').length ? `<span class="at-badge">${MockData.alerts.filter(a=>a.status==='未处理').length}</span>` : ''}
+                ${NotifyPool.unread.length ? `<span class="at-badge">${NotifyPool.unread.length}</span>` : ''}
+                <div class="notify-panel" id="notifyPanel" style="display:none;"></div>
               </div>
               <div class="at-user">
                 <div class="at-avatar">${MockData.admin.user.avatar}</div>
@@ -112,10 +114,86 @@ const Admin = {
     `;
     this.renderMenu();
     this.renderContent();
-    document.getElementById('atAlert').addEventListener('click', () => this.switchMenu('dashboard'));
+    // 铃铛点击切换通知下拉面板
+    document.getElementById('atNotify').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleNotifyPanel();
+    });
     document.getElementById('atToggle').addEventListener('click', () => {
       document.querySelector('.admin-sidebar').classList.toggle('collapsed');
     });
+    // 点击外部关闭通知面板
+    document.addEventListener('click', (e) => {
+      const panel = document.getElementById('notifyPanel');
+      const wrap = document.getElementById('atNotify');
+      if (panel && wrap && !wrap.contains(e.target)) panel.style.display = 'none';
+    });
+  },
+
+  // ===== 通知铃铛下拉面板 =====
+  toggleNotifyPanel() {
+    const panel = document.getElementById('notifyPanel');
+    if (!panel) return;
+    if (panel.style.display === 'none') {
+      this.renderNotifyPanel();
+      panel.style.display = 'block';
+    } else {
+      panel.style.display = 'none';
+    }
+  },
+
+  renderNotifyPanel() {
+    const panel = document.getElementById('notifyPanel');
+    if (!panel) return;
+    const list = NotifyPool.list;
+    // 下拉面板使用内联样式（保持 admin.js 单文件可改）
+    panel.style.cssText = 'display:block; position:absolute; top:100%; right:0; margin-top:8px; width:320px; max-height:400px; overflow-y:auto; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius); box-shadow:var(--shadow-md); z-index:100;';
+    panel.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid var(--border-color); position:sticky; top:0; background:var(--bg-card);">
+        <span style="font-size:13px; font-weight:600;">通知提醒</span>
+        <button class="btn btn-outline btn-sm" onclick="Admin.markAllNotifyRead()">全部已读</button>
+      </div>
+      <div>
+        ${list.length === 0 ? '<div class="empty-inline">暂无通知</div>' :
+          list.map(n => `
+            <div style="display:flex; gap:8px; padding:10px 14px; border-bottom:1px solid var(--border-color); ${n.read ? '' : 'background:rgba(37,99,168,0.04);'}">
+              <div style="width:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center;">
+                ${n.read ? '' : '<span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--status-notfound);"></span>'}
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:12px; color:var(--text-primary); line-height:1.5;">${n.text}</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${n.time}</div>
+              </div>
+            </div>
+          `).join('')}
+      </div>
+    `;
+  },
+
+  markAllNotifyRead() {
+    NotifyPool.markAllRead();
+    this.renderNotifyPanel();
+    this.refreshNotifyBadge();
+    this.toast('已全部标记为已读');
+  },
+
+  refreshNotifyBadge() {
+    const wrap = document.getElementById('atNotify');
+    if (!wrap) return;
+    const oldBadge = wrap.querySelector('.at-badge');
+    const cnt = NotifyPool.unread.length;
+    if (cnt > 0) {
+      if (oldBadge) {
+        oldBadge.textContent = cnt;
+      } else {
+        const b = document.createElement('span');
+        b.className = 'at-badge';
+        b.textContent = cnt;
+        wrap.appendChild(b);
+      }
+    } else if (oldBadge) {
+      oldBadge.remove();
+    }
   },
 
   renderMenu() {
@@ -410,6 +488,21 @@ const Admin = {
         ${n.note ? `<div class="pb-row"><span class="pb-label">特殊需求</span><span class="pb-value">${n.note}</span></div>` : ''}
       </div>
 
+      ${(n.idCardFront || n.idCardBack || (n.reportFiles && n.reportFiles.length)) ? `
+      <div class="modal-card">
+        <div class="card-title">${ICON.fileText} 证件与报告</div>
+        ${n.idCardFront || n.idCardBack ? `
+          <div class="pb-row"><span class="pb-label">身份证</span><span class="pb-value">
+            ${n.idCardFront ? '<span class="tag tag-success">正面已上传</span>' : ''}
+            ${n.idCardBack ? ' <span class="tag tag-success">反面已上传</span>' : ''}
+          </span></div>
+        ` : ''}
+        ${n.reportFiles && n.reportFiles.length ? `
+          <div class="pb-row"><span class="pb-label">检查报告</span><span class="pb-value">${n.reportFiles.length} 张（${n.reportFiles.slice(0,3).map(f=>`<span class="tag tag-gray" style="margin-right:4px;">${f.length>12?f.slice(0,10)+'..':f}</span>`).join('')}${n.reportFiles.length>3?'...':''}）</span></div>
+        ` : ''}
+      </div>
+      ` : ''}
+
       ${n.escortName ? `
         <div class="modal-card">
           <div class="card-title">${ICON.escorts} 已分配陪诊师</div>
@@ -631,38 +724,153 @@ const Admin = {
     `);
   },
 
-  // ===== 医院对接 =====
+  // ===== 医院审批（患者提出的医院申请在此审批）=====
   renderHospitals(el) {
+    const pending = HospitalApplyPool.list.filter(a => a.status === '待审批');
+    const handled = HospitalApplyPool.list.filter(a => a.status !== '待审批');
+    const approved = HospitalApplyPool.list.filter(a => a.status === '已通过');
+    const rejected = HospitalApplyPool.list.filter(a => a.status === '已驳回');
+    const kpis = [
+      { icon: ICON.alert, num: pending.length, label: '待审批', cls: 'kpi-warn' },
+      { icon: ICON.shield, num: approved.length, label: '已通过', cls: 'kpi-green' },
+      { icon: ICON.alert, num: rejected.length, label: '已驳回', cls: 'kpi-red' },
+    ];
     el.innerHTML = `
-      <div class="page-head"><h2>医院对接</h2><div>${MockData.hospitals.length} 家医院</div></div>
-      <div class="toolbar"><button class="btn btn-sm">+ 新增医院</button></div>
-      <div class="hospital-grid">
-        ${MockData.hospitals.map(h => `
-          <div class="hospital-card">
-            <div class="hc-head">
-              <div>
-                <div class="hc-name">${ICON.building} ${h.name}</div>
-                <div class="hc-sub">科室：${h.dept}</div>
-              </div>
-              <span class="status-badge ${h.status==='已合作'?'accepted':'pending'}">${h.status}</span>
-            </div>
-            <div class="hc-body">
-              <div class="pb-row"><span class="pb-label">对接人</span><span class="pb-value">${h.contact}</span></div>
-              <div class="pb-row"><span class="pb-label">电话</span><span class="pb-value">${h.phone}</span></div>
-              <div class="pb-row"><span class="pb-label">绿色通道</span><span class="pb-value">${h.greenChannel?'<span class="tag tag-success">已开通</span>':'<span class="tag tag-gray">未开通</span>'}</span></div>
-              <div class="pb-row"><span class="pb-label">累计订单</span><span class="pb-value">${h.orders}</span></div>
-            </div>
-            <div class="hc-actions">
-              ${h.status === '已合作' ?
-                `<button class="btn btn-outline btn-sm" onclick="Admin.toast('已发起绿色通道预约')">绿色通道</button>
-                 <button class="btn btn-sm" onclick="Admin.toast('已拨号 ${h.phone}')">联系</button>` :
-                `<button class="btn btn-sm" onclick="Admin.toast('已发送合作邀请')">推进合作</button>`
-              }
+      <div class="page-head"><h2>医院审批</h2><div>患者提出的医院申请在此审批</div></div>
+      <div class="kpi-grid">
+        ${kpis.map(kp => `
+          <div class="kpi-card ${kp.cls}">
+            <div class="kpi-icon">${kp.icon}</div>
+            <div class="kpi-body">
+              <div class="kpi-num">${kp.num}</div>
+              <div class="kpi-label">${kp.label}</div>
             </div>
           </div>
         `).join('')}
       </div>
+
+      <!-- 待审批申请 -->
+      <div class="db-card">
+        <div class="db-card-head">
+          <h3>${ICON.clipboard} <span style="margin-left:6px;">待审批申请（${pending.length}）</span></h3>
+        </div>
+        <div class="db-card-body">
+          ${pending.length === 0 ? '<div class="empty-inline">暂无待审批申请</div>' :
+            pending.map(a => `
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:14px 0; border-bottom:1px solid var(--border-color);">
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:13px; font-weight:600; margin-bottom:6px;">${ICON.user} <span style="margin-left:4px;">${a.patient}</span> <span class="cp-sub" style="font-weight:normal;">${a.patientPhone || ''}</span></div>
+                  <div class="pb-row"><span class="pb-label">申请医院</span><span class="pb-value">${a.hospital}</span></div>
+                  <div class="pb-row"><span class="pb-label">科室</span><span class="pb-value">${a.dept}</span></div>
+                  <div class="pb-row"><span class="pb-label">申请理由</span><span class="pb-value">${a.reason}</span></div>
+                  <div class="pb-row"><span class="pb-label">申请时间</span><span class="pb-value">${a.time}</span></div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px; flex-shrink:0;">
+                  <button class="btn btn-sm" onclick="Admin.approveHospital('${a.id}')">${ICON.shield} 通过</button>
+                  <button class="btn btn-outline btn-sm" onclick="Admin.rejectHospital('${a.id}')">驳回</button>
+                </div>
+              </div>
+            `).join('')}
+        </div>
+      </div>
+
+      <!-- 已处理记录 -->
+      <div class="db-card">
+        <div class="db-card-head">
+          <h3>${ICON.scroll} <span style="margin-left:6px;">已处理记录（${handled.length}）</span></h3>
+        </div>
+        <div class="db-card-body">
+          ${handled.length === 0 ? '<div class="empty-inline">暂无已处理记录</div>' :
+            `<div class="table-card">
+              <table class="data-table">
+                <thead><tr><th>患者</th><th>医院</th><th>科室</th><th>理由</th><th>状态</th><th>对接人</th><th>时间</th></tr></thead>
+                <tbody>
+                  ${handled.map(a => `
+                    <tr>
+                      <td>${a.patient}</td>
+                      <td>${a.hospital}</td>
+                      <td>${a.dept}</td>
+                      <td>${a.reason}</td>
+                      <td><span class="status-badge ${a.status==='已通过'?'done':'cancelled'}">${a.status}</span></td>
+                      <td>${a.contact ? a.contact + ' / ' + (a.contactPhone || '-') : '-'}</td>
+                      <td>${a.time}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>`
+          }
+        </div>
+      </div>
+
+      <!-- 已合作医院列表 -->
+      <div class="db-card">
+        <div class="db-card-head">
+          <h3>${ICON.building} <span style="margin-left:6px;">已合作医院（${MockData.hospitals.length}）</span></h3>
+        </div>
+        <div class="db-card-body">
+          <div class="hospital-grid">
+            ${MockData.hospitals.map(h => `
+              <div class="hospital-card">
+                <div class="hc-head">
+                  <div>
+                    <div class="hc-name">${ICON.building} ${h.name}</div>
+                    <div class="hc-sub">等级：${h.level || '-'} · ${h.address || ''}</div>
+                  </div>
+                  <span class="status-badge accepted">${h.status}</span>
+                </div>
+                <div class="hc-body">
+                  <div class="pb-row"><span class="pb-label">简介</span><span class="pb-value">${h.intro || '-'}</span></div>
+                  <div class="pb-row"><span class="pb-label">对接人</span><span class="pb-value">${h.contact} · ${h.phone}</span></div>
+                  <div class="pb-row"><span class="pb-label">累计订单</span><span class="pb-value">${h.orders}</span></div>
+                </div>
+                <div class="hc-actions">
+                  <button class="btn btn-outline btn-sm" onclick="Admin.editHospitalIntro('${h.id}')">编辑简介</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
     `;
+  },
+
+  // 通过医院申请：弹 prompt 让管理员填对接人和电话
+  approveHospital(id) {
+    const a = HospitalApplyPool.list.find(x => x.id === id);
+    if (!a) return;
+    const contact = prompt(`通过 ${a.patient} 申请的「${a.hospital}」\n请填写对接人姓名：`);
+    if (contact === null) return; // 用户取消
+    if (!contact.trim()) { this.toast('对接人姓名不能为空'); return; }
+    const phone = prompt('请填写对接人电话：');
+    if (phone === null) return; // 用户取消
+    HospitalApplyPool.approve(id, contact.trim(), phone.trim());
+    NotifyPool.add(`已通过 ${a.patient} 申请的 ${a.hospital}`, 'hospital_apply');
+    this.refreshNotifyBadge();
+    this.toast(`已通过 ${a.patient} 的医院申请`);
+    this.renderContent();
+  },
+
+  // 驳回医院申请
+  rejectHospital(id) {
+    const a = HospitalApplyPool.list.find(x => x.id === id);
+    if (!a) return;
+    if (confirm(`确认驳回 ${a.patient} 申请的「${a.hospital}」？`)) {
+      HospitalApplyPool.reject(id);
+      this.toast(`已驳回 ${a.patient} 的医院申请`);
+      this.renderContent();
+    }
+  },
+
+  // 编辑已合作医院简介
+  editHospitalIntro(id) {
+    const h = MockData.hospitals.find(x => x.id === id);
+    if (!h) return;
+    const intro = prompt(`编辑 ${h.name} 的简介：`, h.intro || '');
+    if (intro === null) return; // 用户取消
+    h.intro = intro.trim();
+    this.toast(`${h.name} 的简介已更新`);
+    this.renderContent();
   },
 
   // ===== 服务跟踪 =====
@@ -712,19 +920,20 @@ const Admin = {
     `;
   },
 
-  // ===== 财务结算 =====
+  // ===== 服务收费（价格管理）=====
   renderFinance(el) {
-    const f = MockData.finance;
+    const items = PriceTable.items;
+    const monthOrders = MockData.finance.bills.length;
+    const monthRevenue = MockData.finance.monthRevenue;
+    const changeCount = this.priceChanges.length;
     const finKpis = [
-      { icon: ICON.finance, num: '¥' + f.monthRevenue.toLocaleString(), label: '本月营收', cls: 'kpi-green' },
-      { icon: ICON.finance, num: '¥' + f.weekRevenue.toLocaleString(), label: '本周营收', cls: 'kpi-blue' },
-      { icon: ICON.finance, num: '¥' + f.todayRevenue, label: '今日营收', cls: 'kpi-default' },
-      { icon: ICON.alert, num: '¥' + f.pending, label: '待结算', cls: 'kpi-warn' },
-      { icon: ICON.activity, num: '¥' + f.settled.toLocaleString(), label: '已结算', cls: 'kpi-green' },
-      { icon: ICON.dashboard, num: (f.commissionRate*100) + '%', label: '平台抽佣', cls: 'kpi-default' },
+      { icon: ICON.finance, num: items.length, label: '在售套餐数', cls: 'kpi-blue' },
+      { icon: ICON.clipboard, num: monthOrders, label: '本月订单', cls: 'kpi-default' },
+      { icon: ICON.trendUp, num: '¥' + monthRevenue.toLocaleString(), label: '本月营收', cls: 'kpi-green' },
+      { icon: ICON.activity, num: changeCount, label: '价格变更次数', cls: 'kpi-warn' },
     ];
     el.innerHTML = `
-      <div class="page-head"><h2>财务结算</h2><div>订单 · 对账 · 抽佣</div></div>
+      <div class="page-head"><h2>服务收费</h2><div>价格管理 · 在售套餐价格维护</div></div>
       <div class="kpi-grid">
         ${finKpis.map(kp => `
           <div class="kpi-card ${kp.cls}">
@@ -736,35 +945,81 @@ const Admin = {
           </div>
         `).join('')}
       </div>
-      <div class="toolbar">
-        <div class="tb-search-wrap">
-          ${ICON.search}
-          <input class="tb-search" placeholder="搜索订单/患者" />
+
+      <!-- 价格表 -->
+      <div class="db-card">
+        <div class="db-card-head">
+          <h3>${ICON.finance} <span style="margin-left:6px;">价格表（${items.length}）</span></h3>
         </div>
-        <select class="tb-select"><option>全部状态</option><option>已结算</option><option>待结算</option></select>
-        <button class="btn btn-sm" onclick="Admin.toast('已一键结算 ${f.pending} 元')">一键结算待结算</button>
+        <div class="db-card-body">
+          <div class="table-card">
+            <table class="data-table">
+              <thead><tr><th>套餐编号</th><th>套餐名</th><th>描述</th><th>当前价格</th><th>修改价格</th><th>操作</th></tr></thead>
+              <tbody>
+                ${items.map(it => `
+                  <tr>
+                    <td>${it.id}</td>
+                    <td><div class="cp-name">${it.name}</div></td>
+                    <td><div class="cp-sub">${it.desc}</div></td>
+                    <td><span class="star">¥${it.price}</span> <span class="cp-sub">/ ${it.unit}</span></td>
+                    <td>
+                      <div style="display:flex; align-items:center; gap:4px;">
+                        <span>¥</span>
+                        <input type="number" class="fg-input" id="price_${it.id}" value="${it.price}" min="0" step="1" style="width:90px; font-size:12px;" onchange="Admin.savePrice('${it.id}')" />
+                        <span class="cp-sub">/ ${it.unit}</span>
+                      </div>
+                    </td>
+                    <td><button class="btn btn-sm" onclick="Admin.savePrice('${it.id}')">${ICON.shield} 保存</button></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="table-card">
-        <table class="data-table">
-          <thead><tr><th>账单号</th><th>患者</th><th>陪诊师</th><th>类型</th><th>金额</th><th>平台抽佣</th><th>陪诊师所得</th><th>状态</th><th>时间</th></tr></thead>
-          <tbody>
-            ${f.bills.map(b => `
-              <tr>
-                <td>${b.id}</td>
-                <td>${b.patient}</td>
-                <td>${b.escort}</td>
-                <td>${b.type}</td>
-                <td>¥${b.amount}</td>
-                <td>¥${(b.amount * f.commissionRate).toFixed(0)}</td>
-                <td>¥${(b.amount * (1 - f.commissionRate)).toFixed(0)}</td>
-                <td><span class="status-badge ${b.status==='已结算'?'done':'pending'}">${b.status}</span></td>
-                <td>${b.time}</td>
-              </tr>
+
+      <!-- 操作记录（最近 3 条改价）-->
+      <div class="db-card">
+        <div class="db-card-head">
+          <h3>${ICON.scroll} <span style="margin-left:6px;">操作记录（最近 3 条）</span></h3>
+        </div>
+        <div class="db-card-body">
+          ${this.priceChanges.length === 0 ? '<div class="empty-inline">暂无改价记录</div>' :
+            this.priceChanges.slice(0, 3).map(c => `
+              <div class="db-row-item">
+                <div class="dbr-main">
+                  <div class="dbr-patient">${c.itemName}</div>
+                  <div class="dbr-info">¥${c.oldPrice} → ¥${c.newPrice} · ${c.time}</div>
+                </div>
+                <span class="status-badge done">已生效</span>
+              </div>
             `).join('')}
-          </tbody>
-        </table>
+        </div>
       </div>
     `;
+  },
+
+  // 保存价格：失焦或点保存按钮触发，调用 PriceTable.updatePrice 并记录
+  savePrice(id) {
+    const input = document.getElementById('price_' + id);
+    if (!input) return;
+    const newPrice = Number(input.value);
+    if (!Number.isFinite(newPrice) || newPrice <= 0) {
+      this.toast('请输入有效价格（大于 0）');
+      return;
+    }
+    const it = PriceTable.items.find(x => x.id === id);
+    if (!it) return;
+    const oldPrice = it.price;
+    if (oldPrice === newPrice) {
+      this.toast('价格未变更');
+      return;
+    }
+    PriceTable.updatePrice(id, newPrice);
+    const time = new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+    this.priceChanges.unshift({ id, itemName: it.name, oldPrice, newPrice, time });
+    this.toast(`${it.name} 价格已更新：¥${oldPrice} → ¥${newPrice}`);
+    this.renderContent();
   },
 
   // ===== 评价反馈 =====

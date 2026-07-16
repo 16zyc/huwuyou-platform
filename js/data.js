@@ -31,6 +31,45 @@ const AIConfig = {
   },
 };
 
+// ========== 服务价格表（后台可改，患者可见）==========
+const PriceTable = {
+  items: [
+    { id: 'S01', name: '半程陪诊', desc: '4小时陪诊服务，含挂号陪同、排队取药', price: 298, unit: '次' },
+    { id: 'S02', name: '全程陪诊', desc: '挂号→就诊→检查→取药全程陪同', price: 598, unit: '次' },
+    { id: 'S03', name: '代办跑腿', desc: '代取药、代取报告、代挂号', price: 98, unit: '次' },
+    { id: 'S04', name: '陪同复诊', desc: '单次复诊陪诊服务', price: 398, unit: '次' },
+  ],
+  getPrice(name) { const it = this.items.find(i => i.name === name); return it ? it.price : 298; },
+  updatePrice(id, price) { const it = this.items.find(i => i.id === id); if (it) it.price = price; },
+};
+
+// ========== 医院申请池（患者提出新医院 → 后台审批）==========
+const HospitalApplyPool = {
+  list: [
+    { id: 'HA01', hospital: '北京大学人民医院', dept: '心内科', patient: '张建国', patientPhone: '139****1122', reason: '想去看心内科，希望平台能对接', status: '待审批', time: '07-15 09:30' },
+    { id: 'HA02', hospital: '中国医学科学院肿瘤医院', dept: '肿瘤内科', patient: '陈志强', patientPhone: '137****8899', reason: '需要做肿瘤复查', status: '待审批', time: '07-14 14:20' },
+  ],
+  add(item) { const n = Object.assign({ id: 'HA' + Date.now().toString().slice(-6), status: '待审批', time: new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) }, item); this.list.unshift(n); return n; },
+  approve(id, contact, phone) { const n = this.list.find(x => x.id === id); if (n) { n.status = '已通过'; n.contact = contact; n.contactPhone = phone; } },
+  reject(id) { const n = this.list.find(x => x.id === id); if (n) n.status = '已驳回'; },
+};
+
+// ========== 通知提醒池（后台顶部铃铛）==========
+const NotifyPool = {
+  list: [
+    { id: 'NT01', type: 'new_patient', text: '新患者张建国提交了陪诊需求', time: '07-15 09:30', read: false },
+    { id: 'NT02', type: 'hospital_apply', text: '陈志强申请对接中国医学科学院肿瘤医院', time: '07-14 14:20', read: false },
+    { id: 'NT03', type: 'need_done', text: '李秀英的需求已完成分配陪诊师', time: '07-14 11:05', read: true },
+  ],
+  add(text, type = 'info') {
+    const n = { id: 'NT' + Date.now().toString().slice(-6), type, text, time: new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}), read: false };
+    this.list.unshift(n);
+    return n;
+  },
+  markAllRead() { this.list.forEach(n => n.read = true); },
+  get unread() { return this.list.filter(n => !n.read); },
+};
+
 // ========== 模拟数据 ==========
 const MockData = {
   // ===== 患者端 =====
@@ -88,10 +127,18 @@ const MockData = {
 
   // ===== 合作医院 =====
   hospitals: [
-    { id: 'H01', name: '北京协和医院', contact: '张主任', phone: '010-6915-XXXX', dept: '全科室', status: '已合作', greenChannel: true, orders: 580 },
-    { id: 'H02', name: '北京同仁医院', contact: '李主任', phone: '010-5826-XXXX', dept: '眼科/耳鼻喉', status: '已合作', greenChannel: true, orders: 320 },
-    { id: 'H03', name: '北京大学第一医院', contact: '王主任', phone: '010-8357-XXXX', dept: '综合', status: '已合作', greenChannel: true, orders: 245 },
-    { id: 'H04', name: '中国人民解放军总医院', contact: '赵主任', phone: '010-6688-XXXX', dept: '综合', status: '洽谈中', greenChannel: false, orders: 0 },
+    { id: 'H01', name: '北京协和医院', contact: '张主任', phone: '010-6915-XXXX', dept: '全科室', status: '已合作', greenChannel: true, orders: 580,
+      intro: '北京协和医院是国家卫生健康委员会直属的大型三级甲等综合医院，拥有多个国家临床重点专科，综合实力位居全国前列。',
+      address: '北京市东城区帅府园1号', level: '三甲' },
+    { id: 'H02', name: '北京同仁医院', contact: '李主任', phone: '010-5826-XXXX', dept: '眼科/耳鼻喉', status: '已合作', greenChannel: true, orders: 320,
+      intro: '北京同仁医院以眼科、耳鼻咽喉科学为国家重点学科，是集医疗、教学、科研、预防、保健于一体的三级甲等综合医院。',
+      address: '北京市东城区东交民巷1号', level: '三甲' },
+    { id: 'H03', name: '北京大学第一医院', contact: '王主任', phone: '010-8357-XXXX', dept: '综合', status: '已合作', greenChannel: true, orders: 245,
+      intro: '北京大学第一医院是首批"国家队"医疗中心，以泌尿外科、肾脏内科、皮肤科等优势学科闻名。',
+      address: '北京市西城区西什库大街8号', level: '三甲' },
+    { id: 'H04', name: '中国人民解放军总医院', contact: '赵主任', phone: '010-6688-XXXX', dept: '综合', status: '已合作', greenChannel: true, orders: 180,
+      intro: '中国人民解放军总医院（301医院）是集医疗、保健、教学、科研于一体的大型现代化综合性医院，承担重要医疗保障任务。',
+      address: '北京市海淀区复兴路28号', level: '三甲' },
   ],
 
   // ===== 患者档案（除当前登录患者外的其他档案）=====

@@ -90,9 +90,14 @@ body.loginSelect, body.patientLogin, body.adminLogin { background: var(--bg-prim
 .ai-icon-sm { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
 
 /* ========== 患者端（手机壳）========== */
-body.patient { background: var(--bg-primary); display: flex; justify-content: center; }
-#phone-frame { width: 100%; max-width: 420px; min-height: 100vh; background: var(--bg-primary); position: relative; box-shadow: 0 0 1px var(--border-color); }
-@media (min-width: 480px) { #phone-frame { border-radius: 20px; overflow: hidden; margin: 20px 0; min-height: calc(100vh - 40px); box-shadow: 0 8px 32px rgba(0,0,0,0.08); } }
+/* 手机端：占满全屏；PC 端：居中显示手机壳，两侧留灰底 */
+body.patient { background: var(--bg-tertiary); display: flex; justify-content: center; }
+#phone-frame { width: 100%; max-width: 100%; min-height: 100vh; background: var(--bg-primary); position: relative; box-shadow: none; }
+@media (min-width: 768px) {
+  body.patient { padding: 24px 0; }
+  #phone-frame { max-width: 420px; min-height: calc(100vh - 48px); border-radius: 24px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.12); border: 1px solid var(--border-color); }
+  .tabbar { border-radius: 0 0 24px 24px; }
+}
 #app { display: flex; flex-direction: column; min-height: 100vh; }
 .role-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color); }
 .role-brand { display: flex; align-items: center; gap: 10px; }
@@ -197,6 +202,42 @@ body.patient { background: var(--bg-primary); display: flex; justify-content: ce
 .ai-tip .ai-title { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
 .ai-tip .ai-title svg { width: 14px; height: 14px; stroke: var(--accent); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .ai-tip .ai-text { font-size: 11px; color: var(--text-secondary); margin-top: 3px; line-height: 1.5; }
+
+/* AI 消息中的动作链接（按钮样式）*/
+.ai-action-link { display: inline-block; margin-top: 8px; padding: 8px 16px; background: var(--accent); color: #fff !important; text-decoration: none; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s; }
+.ai-action-link:hover { background: var(--accent-deep); }
+
+/* 通知面板 */
+.notify-panel { position: absolute; top: calc(100% + 8px); right: 0; width: 340px; max-height: 420px; overflow-y: auto; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: 0 8px 32px rgba(0,0,0,0.12); z-index: 100; }
+.notify-panel-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+.notify-panel-head h4 { font-size: 14px; font-weight: 600; }
+.notify-item { display: flex; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border-color); cursor: pointer; }
+.notify-item:hover { background: var(--bg-hover); }
+.notify-item.unread { background: var(--accent-bg); }
+.notify-item.unread .notify-dot { background: var(--status-notfound); }
+.notify-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; flex-shrink: 0; margin-top: 5px; }
+.notify-item-text { font-size: 13px; color: var(--text-primary); line-height: 1.5; }
+.notify-item-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* 患者端上传组件 */
+.upload-box { width: 80px; height: 80px; border: 2px dashed var(--border-color); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: border-color .15s; }
+.upload-box:hover { border-color: var(--accent); }
+.upload-box.has-img { border-style: solid; border-color: var(--accent); }
+.upload-box img { width: 100%; height: 100%; object-fit: cover; }
+.upload-box .up-icon { font-size: 22px; color: var(--text-muted); }
+.up-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.up-thumb { position: relative; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden; }
+.up-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.up-del { position: absolute; top: 4px; right: 4px; width: 18px; height: 18px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: none; }
+
+/* 开关 */
+.toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-color); border-radius: 22px; transition: .2s; }
+.switch-slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: .2s; }
+.switch input:checked + .switch-slider { background: var(--accent); }
+.switch input:checked + .switch-slider:before { transform: translateX(18px); }
 
 /* 星级评价选择器 */
 .star-picker { display: flex; gap: 6px; }

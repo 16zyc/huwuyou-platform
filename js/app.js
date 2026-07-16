@@ -288,13 +288,47 @@ const App = {
     try {
       const reply = await this.aiReply(q);
       document.getElementById(loadingId).remove();
-      body.innerHTML += `<div class="ai-msg ai-bot">${this.escape(reply).replace(/\n/g,'<br>')}</div>`;
+      // 渲染消息，把 markdown 链接 [text](#action) 转成可点击按钮
+      const html = this.renderAiMessage(reply);
+      body.innerHTML += `<div class="ai-msg ai-bot">${html}</div>`;
+      // 绑定链接点击事件
+      body.querySelectorAll('a[data-action]').forEach(a => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const action = a.dataset.action;
+          if (action === 'goto-upload') {
+            // 关闭 AI 面板，跳到"我的需求"Tab
+            document.getElementById('aiPanel').hidden = true;
+            document.getElementById('aiFloat').hidden = false;
+            App.switchTab(1);
+          }
+        });
+      });
       body.scrollTop = body.scrollHeight;
     } catch (e) {
       document.getElementById(loadingId).remove();
       body.innerHTML += `<div class="ai-msg ai-bot">抱歉，AI 暂时不可用，请稍后再试。错误：${this.escape(String(e).slice(0,80))}</div>`;
       body.scrollTop = body.scrollHeight;
     }
+  },
+
+  // 渲染 AI 消息：转义 + 换行 + 链接转按钮
+  renderAiMessage(text) {
+    // 先把 [text](#action) 提取出来，避免被 escape
+    const links = [];
+    let processed = text.replace(/\[([^\]]+)\]\(#([\w-]+)\)/g, (m, label, action) => {
+      links.push({ label, action });
+      return '__LINK_' + (links.length - 1) + '__';
+    });
+    // 转义其余文本
+    let html = this.escape(processed);
+    // 换行
+    html = html.replace(/\n/g, '<br>');
+    // 还原链接为按钮样式
+    links.forEach((l, i) => {
+      html = html.replace('__LINK_' + i + '__', `<a href="#" data-action="${l.action}" class="ai-action-link">${this.escape(l.label)}</a>`);
+    });
+    return html;
   },
 
   // 真实调用 DeepSeek API 理解患者需求
@@ -383,8 +417,8 @@ const App = {
   createNeedFromAI(parsed, originalQuery) {
     const u = MockData.patient.user;
     const med = MockData.patient.medical;
-    const serviceMap = { '半程陪诊': 298, '全程陪诊': 598, '代办跑腿': 98, '陪同复诊': 398 };
-    const amount = serviceMap[parsed.serviceType] || 298;
+    // 从 PriceTable 读取真实价格
+    const amount = PriceTable.getPrice(parsed.serviceType) || 298;
     const req = NeedPool.add({
       patientName: u.name, gender: u.gender, age: u.age, phone: u.phone,
       emergencyName: u.emergencyName, emergencyPhone: u.emergencyPhone,
@@ -396,8 +430,12 @@ const App = {
       amount: amount,
       note: parsed.note ? ('AI解析：' + parsed.note + '（原文：' + originalQuery.slice(0,40) + '）') : ('AI对话解析：' + originalQuery.slice(0,60)),
       status: '待处理',
+      idCardFront: null, idCardBack: null, reportFiles: [],
     });
-    return '已帮您整理好需求并提交：\n\n• 患者：' + u.name + '（' + u.gender + '，' + u.age + '岁）\n• 医院：' + parsed.hospital + ' · ' + parsed.dept + '\n• 时间：' + parsed.date + '\n• 服务：' + parsed.serviceType + '（¥' + amount + '）\n• 编号：' + req.id + '\n\n需求已同步给后台，工作人员将为您匹配陪诊师并对接医院。\n可在「陪诊进度」里查看最新状态。';
+    // 同步通知后台
+    NotifyPool.add('新患者 ' + u.name + ' 提交了陪诊需求（' + parsed.hospital + '·' + parsed.dept + '）', 'new_patient');
+    // 返回卡片式消息（含上传身份证引导按钮）
+    return '已帮您整理好需求并提交：\n\n• 患者：' + u.name + '（' + u.gender + '，' + u.age + '岁）\n• 医院：' + parsed.hospital + ' · ' + parsed.dept + '\n• 时间：' + parsed.date + '\n• 服务：' + parsed.serviceType + '（¥' + amount + '）\n• 编号：' + req.id + '\n\n需求已同步给后台，工作人员将为您匹配陪诊师并对接医院。\n\n为完成实名认证，请上传身份证（正反面）和近期检查报告：\n[立即上传证件](#goto-upload)\n\n您也可以直接去「我的需求」页填写或上传。';
   },
 
   // 从 AI 返回内容中提取 JSON（兼容 markdown 代码块包裹）

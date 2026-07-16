@@ -21,21 +21,78 @@ const P_ICON = {
   chevronLeft: '<svg class="icon" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>',
   clock: '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
   shield: '<svg class="icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+  // 新增：医院大楼图标
+  building: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M15 21V9a2 2 0 0 1 2-2 2 2 0 0 1 2 2v12"/><path d="M9 7h.01M9 11h.01M9 15h.01M17 13h.01M17 17h.01"/></svg>',
+  // 新增：扫描/OCR 图标
+  scan: '<svg class="icon" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M3 12h18"/></svg>',
+  // 新增：图片图标
+  image: '<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>',
+  // 新增：地图定位图标
+  mapPin: '<svg class="icon" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
 };
 
+// ========== 一次性注入上传组件相关样式 ==========
+(() => {
+  if (document.getElementById('patient-upload-style')) return;
+  const style = document.createElement('style');
+  style.id = 'patient-upload-style';
+  style.textContent = `
+    .upload-box { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:10px; border:1px dashed var(--border-light); border-radius:var(--radius); background:var(--bg-tertiary); width:108px; min-height:120px; text-align:center; flex-shrink:0; }
+    .upload-box .up-empty { display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--text-muted); }
+    .upload-box .up-empty svg { width:22px; height:22px; stroke:var(--text-muted); stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+    .upload-box img.up-preview { width:80px; height:80px; object-fit:cover; border-radius:4px; border:1px solid var(--border-color); }
+    .upload-box .up-btns { display:flex; flex-direction:column; gap:4px; width:100%; margin-top:6px; }
+    .upload-box .up-status { font-size:11px; margin-top:4px; }
+    .up-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; }
+    .up-grid .up-item { position:relative; }
+    .up-grid img { width:100%; aspect-ratio:1; object-fit:cover; border-radius:4px; border:1px solid var(--border-color); }
+    .up-grid .up-del { position:absolute; top:2px; right:2px; background:rgba(220,38,38,0.92); color:#fff; border:none; border-radius:50%; width:20px; height:20px; font-size:13px; line-height:18px; padding:0; cursor:pointer; }
+    .up-grid .up-name { font-size:10px; color:var(--text-muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .toggle-row { display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:var(--bg-tertiary); border-radius:var(--radius); margin-bottom:10px; font-size:13px; }
+    .toggle-row .toggle-label { display:flex; align-items:center; gap:6px; color:var(--text-primary); }
+    .toggle-row .toggle-label svg { width:16px; height:16px; stroke:var(--accent); stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+    .switch { position:relative; display:inline-block; width:38px; height:20px; }
+    .switch input { opacity:0; width:0; height:0; }
+    .switch .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:var(--border-light); border-radius:20px; transition:.2s; }
+    .switch .slider:before { content:""; position:absolute; height:16px; width:16px; left:2px; bottom:2px; background:#fff; border-radius:50%; transition:.2s; }
+    .switch input:checked + .slider { background:var(--accent); }
+    .switch input:checked + .slider:before { transform:translateX(18px); }
+    .h-level-tag { font-size:11px; padding:2px 8px; border-radius:4px; background:var(--accent-bg); color:var(--accent); border:1px solid var(--accent); white-space:nowrap; }
+    .h-green-tag { display:inline-block; font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(21,128,61,0.1); color:var(--status-covered); border:1px solid var(--status-covered); margin-top:8px; }
+    .h-name { font-family:'Noto Serif SC', serif; font-size:16px; font-weight:600; color:var(--text-primary); }
+    .h-intro { font-size:12px; color:var(--text-secondary); margin-top:8px; line-height:1.6; }
+    .tip-card { background:var(--accent-bg); border:1px solid var(--accent); }
+    .tip-card .card-title { color:var(--accent); }
+  `;
+  document.head.appendChild(style);
+})();
+
 const Patient = {
-  // 4 个底部 Tab
+  // 5 个底部 Tab（新增「医院」Tab，放在陪诊进度和我的之间）
   tabs: [
     { name: '首页', icon: P_ICON.home },
     { name: '我的需求', icon: P_ICON.needs },
     { name: '陪诊进度', icon: P_ICON.track },
+    { name: '医院', icon: P_ICON.building },
     { name: '我的', icon: P_ICON.user },
   ],
+
+  // 上传状态：身份证正反面 { front, back }，每项 { name, file, url }
+  _idCardImgs: { front: null, back: null },
+  // OCR 识别结果（按面记录）
+  _idCardOcrDone: { front: false, back: false },
+  // 检查报告图片数组 [{ name, file, url }]
+  _reportImgs: [],
+  // AI 智能识别开关（开启后上传身份证自动 OCR）
+  _aiOcrEnabled: false,
+  // 是否展开"申请对接新医院"表单
+  _showApplyForm: false,
 
   render(tab, el) {
     if (tab === 0) this.renderHome(el);
     else if (tab === 1) this.renderNeed(el);
     else if (tab === 2) this.renderProgress(el);
+    else if (tab === 3) this.renderHospitals(el);
     else this.renderProfile(el);
   },
 
@@ -107,10 +164,15 @@ const Patient = {
     `;
   },
 
-  // ===== Tab 2: 我的需求 - 基本信息 / 病史 / 联系方式 / 服务要求 =====
+  // ===== Tab 2: 我的需求 - 基本信息 / 病史 / 联系方式 / 证件上传 / 服务要求 =====
   renderNeed(el) {
     const u = MockData.patient.user;
     const med = MockData.patient.medical;
+    // 从价格表读取各类服务价格（不硬编码）
+    const halfPrice = PriceTable.getPrice('半程陪诊');
+    const fullPrice = PriceTable.getPrice('全程陪诊');
+    const errandPrice = PriceTable.getPrice('代办跑腿');
+    const revisitPrice = PriceTable.getPrice('陪同复诊');
     el.innerHTML = `
       <div class="page-head">
         <h2>我的需求</h2>
@@ -147,6 +209,28 @@ const Patient = {
         <button class="btn btn-outline btn-sm" style="margin-top:8px; width:100%;" onclick="Patient.toast('编辑联系方式（演示）')">编辑</button>
       </div>
 
+      <!-- 身份证上传 -->
+      <div class="card">
+        <div class="card-title">${P_ICON.card} 身份证上传</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">上传身份证正反面，用于实名认证（信息加密存储）</div>
+        <!-- AI 智能识别开关 -->
+        <div class="toggle-row">
+          <span class="toggle-label">${P_ICON.scan} AI 智能识别</span>
+          <label class="switch">
+            <input type="checkbox" id="ai_ocr_switch" ${this._aiOcrEnabled ? 'checked' : ''} onchange="Patient.toggleAiOcr()" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div id="idcard_upload_area">${this._renderIdCardUploadArea()}</div>
+      </div>
+
+      <!-- 检查报告上传 -->
+      <div class="card">
+        <div class="card-title">${P_ICON.image} 检查报告上传</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:10px;">上传近期检查报告、化验单等，帮助陪诊师了解病情（可选）</div>
+        <div id="report_upload_area">${this._renderReportUploadArea()}</div>
+      </div>
+
       <!-- 服务要求 -->
       <div class="card">
         <div class="card-title">${P_ICON.clipboard} 服务要求</div>
@@ -175,10 +259,10 @@ const Patient = {
         <div class="form-group">
           <div class="fg-label">服务类型</div>
           <div class="fg-options" id="reqType">
-            <div class="fg-option sel" data-v="半程陪诊">半程陪诊<div class="fo-sub">4小时</div></div>
-            <div class="fg-option" data-v="全程陪诊">全程陪诊<div class="fo-sub">挂号-取药</div></div>
-            <div class="fg-option" data-v="代办跑腿">代办跑腿<div class="fo-sub">代取药</div></div>
-            <div class="fg-option" data-v="陪同复诊">陪同复诊<div class="fo-sub">单次</div></div>
+            <div class="fg-option sel" data-v="半程陪诊">半程陪诊<div class="fo-sub">4小时 · ¥${halfPrice}</div></div>
+            <div class="fg-option" data-v="全程陪诊">全程陪诊<div class="fo-sub">挂号-取药 · ¥${fullPrice}</div></div>
+            <div class="fg-option" data-v="代办跑腿">代办跑腿<div class="fo-sub">代取药 · ¥${errandPrice}</div></div>
+            <div class="fg-option" data-v="陪同复诊">陪同复诊<div class="fo-sub">单次 · ¥${revisitPrice}</div></div>
           </div>
         </div>
         <div class="form-group">
@@ -226,9 +310,149 @@ const Patient = {
       history: med.history, allergy: med.allergy, medicine: med.medicine, mobility: med.mobility,
       hospital, dept, date, serviceType: typeSel.dataset.v, note,
       status: '待处理',
+      // 附件信息（仅传文件名，避免 dataURL 过大）
+      idCardFront: this._idCardImgs?.front?.name || null,
+      idCardBack: this._idCardImgs?.back?.name || null,
+      reportFiles: this._reportImgs?.map(f => f.name) || [],
     });
     this.toast(`需求已提交\n编号 ${req.id}\n后台将为您匹配陪诊师并对接医院`);
     setTimeout(() => App.switchTab(2), 1500);
+  },
+
+  // ===== 身份证/检查报告上传相关方法 =====
+
+  // 切换 AI 智能识别开关
+  toggleAiOcr() {
+    this._aiOcrEnabled = !this._aiOcrEnabled;
+    // 只更新开关 DOM 状态，避免整体重渲染丢失表单输入
+    const sw = document.getElementById('ai_ocr_switch');
+    if (sw) sw.checked = this._aiOcrEnabled;
+    this.toast(this._aiOcrEnabled ? 'AI 智能识别已开启，上传身份证将自动识别' : 'AI 智能识别已关闭');
+  },
+
+  // 渲染身份证上传区域（正面 + 反面）
+  _renderIdCardUploadArea() {
+    const renderSide = (side, label) => {
+      const img = this._idCardImgs[side];
+      const ocrDone = this._idCardOcrDone[side];
+      return `
+        <div class="upload-box">
+          ${img ? `
+            <img class="up-preview" src="${img.url}" alt="${label}" />
+            <div class="up-status" style="color:var(--status-covered);">${label}已上传</div>
+          ` : `
+            <div class="up-empty">
+              ${P_ICON.image}
+              <div style="font-size:11px;">${label}</div>
+            </div>
+          `}
+          <input type="file" accept="image/*" capture style="display:none;" id="idcard_${side}_input" onchange="Patient.uploadIdCard('${side}', this)" />
+          <div class="up-btns">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('idcard_${side}_input').click()">${img ? '重传' : '上传' + label}</button>
+            ${img ? `<button class="btn btn-outline btn-sm" style="color:var(--status-notfound); border-color:var(--status-notfound);" onclick="Patient.removeIdCard('${side}')">删除</button>` : ''}
+            ${img && !ocrDone ? `<button class="btn btn-outline btn-sm" style="color:var(--accent);" onclick="Patient.ocrIdCard('${side}')">${P_ICON.scan} 自动识别</button>` : ''}
+            ${ocrDone ? `<div style="font-size:11px; color:var(--accent); margin-top:2px;">${side === 'front' ? '身份证号已识别' : '签发信息已识别'}</div>` : ''}
+          </div>
+        </div>
+      `;
+    };
+    return `
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        ${renderSide('front', '正面')}
+        ${renderSide('back', '反面')}
+      </div>
+    `;
+  },
+
+  // 上传身份证（side: 'front' | 'back'）
+  uploadIdCard(side, input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    // 释放旧 URL，避免内存泄漏
+    if (this._idCardImgs[side]?.url) URL.revokeObjectURL(this._idCardImgs[side].url);
+    const url = URL.createObjectURL(file);
+    this._idCardImgs[side] = { name: file.name, file, url };
+    // 上传后重置该面 OCR 状态（重传需重新识别）
+    this._idCardOcrDone[side] = false;
+    // 局部刷新上传区
+    const area = document.getElementById('idcard_upload_area');
+    if (area) area.innerHTML = this._renderIdCardUploadArea();
+    // 若开启 AI 智能识别，自动调用 OCR
+    if (this._aiOcrEnabled) {
+      this.ocrIdCard(side);
+    }
+  },
+
+  // 删除身份证图片
+  removeIdCard(side) {
+    if (this._idCardImgs[side]?.url) URL.revokeObjectURL(this._idCardImgs[side].url);
+    this._idCardImgs[side] = null;
+    this._idCardOcrDone[side] = false;
+    const area = document.getElementById('idcard_upload_area');
+    if (area) area.innerHTML = this._renderIdCardUploadArea();
+  },
+
+  // OCR 识别身份证（演示：模拟识别过程，正面回填身份证号）
+  ocrIdCard(side) {
+    if (!this._idCardImgs[side]) {
+      this.toast('请先上传身份证' + (side === 'front' ? '正面' : '反面'));
+      return;
+    }
+    this.toast('正在识别身份证' + (side === 'front' ? '正面' : '反面') + '...');
+    setTimeout(() => {
+      this._idCardOcrDone[side] = true;
+      const msg = side === 'front'
+        ? '身份证号识别成功：' + MockData.patient.user.idMasked
+        : '反面信息识别成功（签发机关、有效期）';
+      this.toast(msg);
+      const area = document.getElementById('idcard_upload_area');
+      if (area) area.innerHTML = this._renderIdCardUploadArea();
+    }, 800);
+  },
+
+  // 渲染检查报告上传区域
+  _renderReportUploadArea() {
+    const hasImgs = this._reportImgs.length > 0;
+    return `
+      ${hasImgs ? `
+        <div class="up-grid">
+          ${this._reportImgs.map((img, i) => `
+            <div class="up-item">
+              <img src="${img.url}" alt="${img.name}" />
+              <button class="up-del" title="删除" onclick="Patient.removeReport(${i})">×</button>
+              <div class="up-name">${img.name}</div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+      <input type="file" accept="image/*" multiple style="display:none;" id="report_input" onchange="Patient.uploadReport(this)" />
+      <button class="btn btn-outline btn-sm" style="margin-top:${hasImgs ? '8px' : '0'}; width:100%;" onclick="document.getElementById('report_input').click()">
+        ${P_ICON.image} ${hasImgs ? '继续添加报告' : '上传检查报告'}
+      </button>
+    `;
+  },
+
+  // 上传检查报告（多选）
+  uploadReport(input) {
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    files.forEach(file => {
+      const url = URL.createObjectURL(file);
+      this._reportImgs.push({ name: file.name, file, url });
+    });
+    // 清空 input 的 value，使下次选同名文件也能触发 change
+    input.value = '';
+    const area = document.getElementById('report_upload_area');
+    if (area) area.innerHTML = this._renderReportUploadArea();
+  },
+
+  // 删除某张检查报告
+  removeReport(index) {
+    const img = this._reportImgs[index];
+    if (img?.url) URL.revokeObjectURL(img.url);
+    this._reportImgs.splice(index, 1);
+    const area = document.getElementById('report_upload_area');
+    if (area) area.innerHTML = this._renderReportUploadArea();
   },
 
   // ===== Tab 3: 陪诊进度 =====
@@ -389,7 +613,103 @@ const Patient = {
     setTimeout(() => App.switchTab(2), 1500);
   },
 
-  // ===== Tab 4: 我的 =====
+  // ===== Tab 4: 医院 =====
+  renderHospitals(el) {
+    const hospitals = MockData.hospitals || [];
+    el.innerHTML = `
+      <div class="page-head">
+        <h2>合作医院</h2>
+        <div style="font-size:11px; color:var(--text-muted);">已对接 ${hospitals.length} 家医院，绿色通道优先安排</div>
+      </div>
+
+      <!-- 申请对接新医院提示卡 -->
+      <div class="card tip-card">
+        <div class="card-title">${P_ICON.inbox} 没找到合适的医院？</div>
+        <div style="font-size:12px; color:var(--text-secondary); margin-bottom:10px; line-height:1.6;">如果您想去的医院不在列表中，可以申请对接，平台会尽快联系并开通服务。</div>
+        <button class="btn btn-outline btn-sm" onclick="Patient.toggleHospitalApply()">${this._showApplyForm ? '收起表单' : '申请对接新医院'}</button>
+      </div>
+
+      <!-- 申请对接表单（内联展开） -->
+      ${this._showApplyForm ? this._renderHospitalApplyForm() : ''}
+
+      <!-- 医院列表 -->
+      ${hospitals.length === 0 ? `
+        <div class="empty">
+          <div class="em-icon">${P_ICON.building}</div>
+          <div>暂无合作医院</div>
+        </div>
+      ` : hospitals.map(h => `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+            <div style="flex:1; min-width:0;">
+              <div class="h-name">${h.name}</div>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:4px; display:flex; align-items:center; gap:4px;">${P_ICON.mapPin} ${h.address}</div>
+            </div>
+            <span class="h-level-tag">${h.level || '三甲'}</span>
+          </div>
+          ${h.greenChannel ? `<span class="h-green-tag">绿色通道</span>` : ''}
+          <div class="h-intro">${h.intro || ''}</div>
+          <div class="pb-row" style="margin-top:8px;"><span class="pb-label">对接科室</span><span class="pb-value">${h.dept || '全科室'}</span></div>
+          <div class="pb-row"><span class="pb-label">联系电话</span><span class="pb-value">${h.phone || '-'}</span></div>
+          <div class="pb-row"><span class="pb-label">累计陪诊</span><span class="pb-value">${h.orders || 0} 单</span></div>
+        </div>
+      `).join('')}
+    `;
+  },
+
+  // 切换"申请对接新医院"表单显隐
+  toggleHospitalApply() {
+    this._showApplyForm = !this._showApplyForm;
+    App.switchTab(3);
+  },
+
+  // 渲染申请对接表单
+  _renderHospitalApplyForm() {
+    return `
+      <div class="card">
+        <div class="card-title">${P_ICON.clipboard} 申请对接新医院</div>
+        <div class="form-group">
+          <div class="fg-label">医院名称</div>
+          <input type="text" class="fg-input" id="apply_hospital" placeholder="请输入医院全称" />
+        </div>
+        <div class="form-group">
+          <div class="fg-label">科室</div>
+          <input type="text" class="fg-input" id="apply_dept" placeholder="如：心内科" />
+        </div>
+        <div class="form-group">
+          <div class="fg-label">申请理由</div>
+          <textarea class="fg-input" id="apply_reason" rows="3" placeholder="如：想去看心内科，希望平台能对接"></textarea>
+        </div>
+        <button class="btn" style="width:100%;" onclick="Patient.submitHospitalApply()">提交申请</button>
+      </div>
+    `;
+  },
+
+  // 提交对接新医院申请
+  submitHospitalApply() {
+    const hospital = (document.getElementById('apply_hospital').value || '').trim();
+    const dept = (document.getElementById('apply_dept').value || '').trim();
+    const reason = (document.getElementById('apply_reason').value || '').trim();
+    if (!hospital) { this.toast('请填写医院名称'); return; }
+    if (!dept) { this.toast('请填写科室'); return; }
+    if (!reason) { this.toast('请填写申请理由'); return; }
+
+    const u = MockData.patient.user;
+    HospitalApplyPool.add({
+      hospital, dept,
+      patient: u.name,
+      patientPhone: u.phone,
+      reason,
+    });
+    // 同时给后台发通知
+    NotifyPool.add('患者 ' + u.name + ' 申请对接新医院：' + hospital, 'hospital_apply');
+
+    this._showApplyForm = false;
+    this.toast('已提交申请，平台会尽快对接');
+    setTimeout(() => App.switchTab(3), 1200);
+  },
+
+  // ===== Tab 5: 我的 =====
   renderProfile(el) {
     const u = MockData.patient.user;
     el.innerHTML = `
