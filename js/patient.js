@@ -647,7 +647,7 @@ const Patient = {
     el.innerHTML = `
       <div class="page-head">
         <h2>合作医院</h2>
-        <div style="font-size:11px; color:var(--text-muted);">已对接 ${hospitals.length} 家医院，绿色通道优先安排</div>
+        <div style="font-size:11px; color:var(--text-muted);">已收录 ${hospitals.length} 家医院，可查看基础介绍</div>
       </div>
 
       <!-- 申请对接新医院提示卡 -->
@@ -675,7 +675,6 @@ const Patient = {
             </div>
             <span class="h-level-tag">${h.level || '三甲'}</span>
           </div>
-          ${h.greenChannel ? `<span class="h-green-tag">绿色通道</span>` : ''}
           <div class="h-intro">${h.intro || ''}</div>
           <div class="pb-row" style="margin-top:8px;"><span class="pb-label">对接科室</span><span class="pb-value">${h.dept || '全科室'}</span></div>
           <div class="pb-row"><span class="pb-label">联系电话</span><span class="pb-value">${h.phone || '-'}</span></div>

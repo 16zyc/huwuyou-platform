@@ -6,7 +6,7 @@ const NeedPool = {
   add(need) {
     const id = 'N' + String(Date.now()).slice(-6) + this.seq++;
     const now = new Date().toLocaleString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-    const n = Object.assign({ id, status: '待处理', createTime: now, escortName: null, escortPhone: null, hospitalContact: null, feedback: null, amount: 0 }, need);
+    const n = Object.assign({ id, status: '待处理', createTime: now, escortName: null, escortPhone: null, feedback: null, amount: 0 }, need);
     this.list.unshift(n);
     return n;
   },
@@ -18,17 +18,14 @@ const NeedPool = {
   },
 };
 
-// ========== AI 配置（DeepSeek API）==========
-// 真实接入 DeepSeek Chat API，支持自然语言理解患者需求并自动填写表单
+// ========== AI 配置 ==========
+// 演示版只使用本地状态机；生产环境由后端代理真实模型，浏览器不保存密钥。
 const AIConfig = {
-  apiKey: localStorage.getItem('huwuyou_ai_key') || 'sk-3682d3ff55984b5ba1058b2b0405fc4f',
-  baseUrl: 'https://api.deepseek.com/v1',
-  model: 'deepseek-chat',
-  enabled: true,
-  setKey(key) {
-    this.apiKey = key;
-    localStorage.setItem('huwuyou_ai_key', key);
-  },
+  apiKey: '',
+  baseUrl: '',
+  model: '本地规则状态机',
+  enabled: false,
+  setKey() {},
 };
 
 // ========== 服务价格表（后台可改，患者可见）==========
@@ -127,16 +124,16 @@ const MockData = {
 
   // ===== 合作医院 =====
   hospitals: [
-    { id: 'H01', name: '北京协和医院', contact: '张主任', phone: '010-6915-XXXX', dept: '全科室', status: '已合作', greenChannel: true, orders: 580,
+    { id: 'H01', name: '北京协和医院', phone: '010-6915-XXXX', dept: '全科室', status: '已收录', orders: 580,
       intro: '北京协和医院是国家卫生健康委员会直属的大型三级甲等综合医院，拥有多个国家临床重点专科，综合实力位居全国前列。',
       address: '北京市东城区帅府园1号', level: '三甲' },
-    { id: 'H02', name: '北京同仁医院', contact: '李主任', phone: '010-5826-XXXX', dept: '眼科/耳鼻喉', status: '已合作', greenChannel: true, orders: 320,
+    { id: 'H02', name: '北京同仁医院', phone: '010-5826-XXXX', dept: '眼科/耳鼻喉', status: '已收录', orders: 320,
       intro: '北京同仁医院以眼科、耳鼻咽喉科学为国家重点学科，是集医疗、教学、科研、预防、保健于一体的三级甲等综合医院。',
       address: '北京市东城区东交民巷1号', level: '三甲' },
-    { id: 'H03', name: '北京大学第一医院', contact: '王主任', phone: '010-8357-XXXX', dept: '综合', status: '已合作', greenChannel: true, orders: 245,
+    { id: 'H03', name: '北京大学第一医院', phone: '010-8357-XXXX', dept: '综合', status: '已收录', orders: 245,
       intro: '北京大学第一医院是首批"国家队"医疗中心，以泌尿外科、肾脏内科、皮肤科等优势学科闻名。',
       address: '北京市西城区西什库大街8号', level: '三甲' },
-    { id: 'H04', name: '中国人民解放军总医院', contact: '赵主任', phone: '010-6688-XXXX', dept: '综合', status: '已合作', greenChannel: true, orders: 180,
+    { id: 'H04', name: '中国人民解放军总医院', phone: '010-6688-XXXX', dept: '综合', status: '已收录', orders: 180,
       intro: '中国人民解放军总医院（301医院）是集医疗、保健、教学、科研于一体的大型现代化综合性医院，承担重要医疗保障任务。',
       address: '北京市海淀区复兴路28号', level: '三甲' },
   ],
@@ -160,21 +157,6 @@ const MockData = {
       history: '骨关节炎、高血压', allergy: '青霉素', medicine: '布洛芬', mobility: '可独立行走', insurance: '北京医保',
       orders: 7, lastService: '07-14', satisfaction: 4.8 },
   ],
-
-  // ===== 财务记录 =====
-  finance: {
-    monthRevenue: 86420, weekRevenue: 21860, todayRevenue: 3280,
-    commissionRate: 0.15, // 平台抽佣
-    pending: 4280, // 待结算
-    settled: 73390,
-    bills: [
-      { id: 'B001', patient: '王秀兰', escort: '李敏', amount: 598, status: '已结算', time: '07-14', type: '全程陪诊' },
-      { id: 'B002', patient: '张建国', escort: '陈静', amount: 398, status: '已结算', time: '07-12', type: '陪同复诊' },
-      { id: 'B003', patient: '李秀英', escort: '张芳', amount: 298, status: '已结算', time: '07-10', type: '半程陪诊' },
-      { id: 'B004', patient: '刘淑芬', escort: '王强', amount: 98, status: '待结算', time: '07-14', type: '代办跑腿' },
-      { id: 'B005', patient: '陈志强', escort: '李敏', amount: 598, status: '待结算', time: '07-13', type: '全程陪诊' },
-    ],
-  },
 
   // ===== 评价 =====
   reviews: [
@@ -213,7 +195,7 @@ const MockData = {
       history: '高血压、冠心病', allergy: '青霉素', medicine: '降压药', mobility: '可独立行走', insurance: '北京医保',
       hospital: '北京协和医院', dept: '心内科', date: '07-10', serviceType: '全程陪诊',
       note: '老人耳背，需要大声说话', status: '已完成', createTime: '07-08 14:30', amount: 598,
-      escortName: '李敏', escortPhone: '137****4488', hospitalContact: '刘主任',
+      escortName: '李敏', escortPhone: '137****4488',
       feedback: { star: 5, text: '李敏非常耐心，全程陪同挂号看病取药，老人很满意', tags: ['服务耐心', '专业靠谱'], time: '07-10 16:20' },
     },
   ],

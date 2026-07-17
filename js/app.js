@@ -115,7 +115,7 @@ const App = {
             <button class="btn btn-outline" style="margin-top:10px;" onclick="App.adminQuickLogin()">一键演示登录</button>
             <div class="login-tip">
               <div class="ai-icon-sm">AI</div>
-              <div>本系统采用银行级加密 · 所有操作均记入审计日志</div>
+              <div>当前为单浏览器演示环境 · 请勿上传真实敏感资料</div>
             </div>
           </div>
         </div>
