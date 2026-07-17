@@ -29,6 +29,10 @@ const App = {
             <div class="lb-name">护无忧</div>
             <div class="lb-sub">智陪诊全链路平台</div>
           </div>
+          <div class="demo-warning" role="alert">
+            <strong>仅供功能演示</strong>
+            <span>禁止上传真实身份证、病历、检查报告或其他敏感资料</span>
+          </div>
           <div class="role-cards">
             <div class="role-card role-card-patient" onclick="App.goPatientLogin()">
               <div class="rc-icon"><svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
@@ -61,6 +65,10 @@ const App = {
             <div class="lb-sub">输入手机号即可使用</div>
           </div>
           <div class="login-form">
+            <div class="demo-warning" role="alert">
+              <strong>仅供功能演示</strong>
+              <span>请使用演示账号及测试图片，禁止填写或上传真实患者资料</span>
+            </div>
             <div class="form-group">
               <div class="fg-label">手机号</div>
               <input type="tel" class="fg-input" id="p_phone" placeholder="请输入手机号" value="138 8866 8866" />
@@ -96,6 +104,10 @@ const App = {
             <div class="lb-sub">护无忧运营后台</div>
           </div>
           <div class="login-form">
+            <div class="demo-warning" role="alert">
+              <strong>仅供功能演示</strong>
+              <span>本页面不连接生产系统，请勿录入真实患者或业务数据</span>
+            </div>
             <div class="form-group">
               <div class="fg-label">账号</div>
               <input type="text" class="fg-input" id="a_account" placeholder="请输入账号" value="admin@huwuyou" />
