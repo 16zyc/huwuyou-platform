@@ -6,7 +6,8 @@
 button, .btn, input, select, textarea { min-height:44px; }
 button:disabled { opacity:.45; cursor:not-allowed; }
 body.patient { min-height:100dvh; height:100dvh; }
-#phone-frame { height:100dvh; min-height:100dvh; }
+body.patient #root { width:min(100vw, 420px); min-width:0; height:100%; }
+#phone-frame { width:100%; max-width:none; height:100dvh; min-height:100dvh; }
 .role-bar { padding-top:max(12px, env(safe-area-inset-top)); }
 .tabbar { height:calc(var(--tabbar-h) + env(safe-area-inset-bottom)); padding-bottom:env(safe-area-inset-bottom); }
 .screen { overscroll-behavior:contain; }
@@ -123,6 +124,7 @@ body.patient { min-height:100dvh; height:100dvh; }
 .price-input { max-width:110px; }
 @media (min-width:768px) {
   body.patient { min-height:100dvh; height:100dvh; padding:20px 0; overflow:hidden; }
+  .screen { scrollbar-gutter:stable; }
   #phone-frame { min-height:0; height:calc(100dvh - 40px); border-radius:16px; }
   .workflow-sheet-mask { align-items:center; padding:20px; }
   .workflow-sheet { border-radius:16px; }
